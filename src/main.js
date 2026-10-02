@@ -6,6 +6,7 @@ import { createScene } from './scene.js'
 import { createKeyboard } from './keyboard.js'
 import { initHero } from './hero.js'
 import { initModes } from './modes.js'
+import { createSwitch, initSwitch } from './switch.js'
 import { audio } from './audio.js'
 import { initTyping } from './typing.js'
 
@@ -34,25 +35,32 @@ world.fit(keyboard.width)
 initHero(world, keyboard)
 initModes(world, keyboard)
 
+const sw = createSwitch(world)
+initSwitch(world, sw)
+
 // Typing only reacts while the keyboard is on screen
 let kbActive = true
 initTyping(keyboard, audio, () => kbActive)
-
-// Render only while the keyboard is on screen (hero + modes), then fade it out
 ScrollTrigger.create({
   trigger: '#stage',
   start: 'top bottom',
   endTrigger: '#modes',
+  end: 'bottom 30%',
+  onToggle: (self) => { kbActive = self.isActive },
+})
+
+// Render only while a 3D scene is visible (hero, modes, switch), then fade the canvas out
+ScrollTrigger.create({
+  trigger: '#stage',
+  start: 'top bottom',
+  endTrigger: '#switch',
   end: 'bottom top',
-  onToggle: (self) => {
-    kbActive = self.isActive
-    world.setRunning(self.isActive)
-  },
+  onToggle: (self) => world.setRunning(self.isActive),
 })
 gsap.to('#webgl', {
   opacity: 0,
   ease: 'none',
-  scrollTrigger: { trigger: '#modes', start: 'bottom 75%', end: 'bottom 35%', scrub: true },
+  scrollTrigger: { trigger: '#switch', start: 'bottom 75%', end: 'bottom 35%', scrub: true },
 })
 
 // ---------- Mode switcher ----------
@@ -69,12 +77,12 @@ const modeLine = document.querySelector('#mode-line')
 
 function setMode(name) {
   const mode = MODES[name]
-  console.log('mode set:', name) // temporary, for debugging
   root.style.setProperty('--accent', mode.color)
   root.dataset.mode = name
   modeLine.textContent = mode.line
   keyboard.setAccent(mode.color)
   keyboard.setMode(name)
+  sw.setAccent(mode.color) // the switch stem takes the mode color too
   audio.unlock()
   audio.setProfile(name)
   audio.tick() // a click so you hear the new mode right away

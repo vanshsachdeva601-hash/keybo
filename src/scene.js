@@ -26,10 +26,15 @@ export function createScene(canvas) {
   const view = { angle: 0.65, zoom: 1, lookX: 0, lookY: 2.5, lookZ: -1 }
   let fitWidth = 16 // how wide the object is, so we can always fit it on screen
 
-  function applyCamera() {
+    // How far the camera sits when zoom = 1. Other files use this to frame things.
+  function baseDist() {
     const halfFov = THREE.MathUtils.degToRad(camera.fov / 2)
     const fitDist = fitWidth / 2 / (Math.tan(halfFov) * camera.aspect)
-    const d = Math.max(fitDist * 1.25, 19) / view.zoom
+    return Math.max(fitDist * 1.25, 19)
+  }
+
+  function applyCamera() {
+    const d = baseDist() / view.zoom
     camera.position.set(
       view.lookX,
       view.lookY + Math.sin(view.angle) * d,
@@ -70,6 +75,7 @@ export function createScene(canvas) {
     camera,
     renderer,
     view,
+    baseDist,
     isMobile,
     onTick: (fn) => tickers.add(fn), // other files register their per-frame updates here
     setRunning: (v) => { running = v }, // pause rendering when the canvas is not visible

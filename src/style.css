@@ -318,3 +318,41 @@ html.lenis body { height: auto; }
   transition: color 0.3s, border-color 0.3s;
 }
 .sound-toggle:hover { color: var(--text); border-color: var(--accent); }
+/* ---------- Switch anatomy ---------- */
+.switch-stage { position: relative; z-index: 2; height: 600vh; }
+.switch-pin {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  height: 100svh;
+  overflow: hidden;
+}
+.switch-head { position: absolute; top: 5.5rem; left: var(--pad); opacity: 0; visibility: hidden; }
+.switch-head .h2 { margin-bottom: 0; }
+.part-list {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: var(--pad);
+  width: min(24rem, 42vw);
+  display: grid;
+  align-content: center;
+}
+.part { grid-area: 1 / 1; opacity: 0; visibility: hidden; } /* all parts stack in one cell, shown one at a time */
+.part .label { color: var(--accent); }
+.part h3 {
+  font-family: var(--font-head);
+  font-weight: 700;
+  font-size: clamp(1.6rem, 3.2vw, 2.6rem);
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  margin: 0.6rem 0 0.8rem;
+}
+.part p:not(.label) { color: var(--muted); }
+.switch-hint { position: absolute; left: var(--pad); bottom: 1.5rem; }
+
+@media (max-width: 768px) {
+  .switch-head { top: 4.5rem; }
+  .part-list { top: auto; bottom: 3.5rem; right: var(--pad); width: auto; align-content: end; }
+  .switch-hint { display: none; }
+}
