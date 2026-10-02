@@ -27,7 +27,7 @@
 *::before,
 *::after { box-sizing: border-box; margin: 0; }
 
-html { background: var(--bg); scroll-behavior: smooth; }
+html { background: var(--bg); }
 
 body {
   background: var(--bg);
@@ -98,21 +98,15 @@ a { color: inherit; text-decoration: none; }
   height: 100svh;
   overflow: hidden;
 }
-.scene {
-  position: absolute;
-  inset: 5rem var(--pad) 3rem;
-  border: 1px dashed var(--border);
-  display: grid;
-  place-items: end start;
-  padding: 1rem;
-}
 .hero-copy {
   position: relative;
+  z-index: 0;
   height: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
+  padding-top: clamp(5.5rem, 14vh, 9rem);
   gap: 1rem;
   text-align: center;
   pointer-events: none;
@@ -220,3 +214,25 @@ a { color: inherit; text-decoration: none; }
 
 /* ---------- Footer ---------- */
 .footer { padding: 2rem var(--pad); border-top: 1px solid var(--border); }
+
+/* ---------- WebGL canvas: one fixed canvas behind the whole page ---------- */
+#webgl {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  z-index: 1; /* above hero text (0), below every other section (2) */
+  pointer-events: none;
+}
+.section,
+.footer {
+  position: relative;
+  z-index: 2;
+}
+
+/* ---------- Lenis smooth scroll (recommended base styles) ---------- */
+html.lenis,
+html.lenis body { height: auto; }
+.lenis.lenis-smooth { scroll-behavior: auto !important; }
+.lenis.lenis-stopped { overflow: hidden; }
