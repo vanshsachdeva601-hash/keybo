@@ -1,6 +1,6 @@
 // Listens to the real keyboard. Each key press animates the matching 3D key,
 // plays a sound and shows the typed text on the page.
-export function initTyping(keyboard, audio, isActive) {
+export function initTyping (keyboard, audio, isActive) {
   const out = document.querySelector('#typed')
   const toggle = document.querySelector('#sound-toggle')
   const down = new Set() // keys currently held

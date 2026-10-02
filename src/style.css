@@ -286,3 +286,35 @@ html.lenis body { height: auto; }
   .spec-body { max-width: none; }
 }
 #modes { min-height: 120vh; } /* room for the keyboard to sit behind this section */
+/* ---------- Live typing ---------- */
+.typebox { margin-top: 2.5rem; }
+.typed {
+  font-family: var(--font-mono);
+  font-size: clamp(1.25rem, 3vw, 2rem);
+  letter-spacing: 0.02em;
+  min-height: 2.75rem;
+  margin-top: 0.5rem;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+.typed::after {
+  content: '';
+  display: inline-block;
+  width: 0.55em;
+  height: 1.1em;
+  margin-left: 2px;
+  vertical-align: text-bottom;
+  background: var(--accent);
+  animation: blink 1s steps(1) infinite;
+}
+@keyframes blink { 50% { opacity: 0; } }
+
+.sound-toggle {
+  margin-top: 1.5rem;
+  background: none;
+  border: 1px solid var(--border);
+  padding: 0.5rem 0.9rem;
+  cursor: pointer;
+  transition: color 0.3s, border-color 0.3s;
+}
+.sound-toggle:hover { color: var(--text); border-color: var(--accent); }

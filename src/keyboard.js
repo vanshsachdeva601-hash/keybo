@@ -121,7 +121,7 @@ export function createKeyboard(world) {
   const tmp = new THREE.Color(0xedebe6)
 
   onTick((t) => {
-    lit.forEach(({ mat, x }) => {
+      lit.forEach(({ mat, x, glow }) => {
       let intensity = 0
       if (mode === 'play') {
         tmp.setHSL((x * 0.045 + t * 0.35) % 1, 1, 0.5) // hue moves along x and over time = wave
@@ -137,7 +137,7 @@ export function createKeyboard(world) {
         intensity = 0.14 + Math.sin(t * 2 - x * 0.4) * 0.05
       }
       mat.emissive.copy(tmp)
-      mat.emissiveIntensity = intensity + fx.pulse
+      mat.emissiveIntensity = intensity + fx.pulse + glow.v
     })
   })
 
@@ -164,6 +164,27 @@ export function createKeyboard(world) {
         duration: 0.8,
         ease: 'power3.inOut',
       })
+    },
+        press(code) {
+      const k = keys.get(code)
+      if (!k) return
+      gsap.to(k.cap.position, { y: 1.13, duration: 0.06, ease: 'power2.out', overwrite: true }) // key goes down
+      // Ripple: nearby keys flash, farther keys flash later and weaker
+      lit.forEach((o) => {
+        const d = Math.hypot(o.x - k.x, (o.z - k.z) * 1.6)
+        const a = Math.max(0, 0.9 - d * 0.16)
+        if (a <= 0) return
+        gsap.killTweensOf(o.glow)
+        gsap
+          .timeline({ delay: d * 0.025 })
+          .to(o.glow, { v: a, duration: 0.05 })
+          .to(o.glow, { v: 0, duration: 0.7, ease: 'power2.out' })
+      })
+    },
+    release(code) {
+      const k = keys.get(code)
+      if (!k) return
+      gsap.to(k.cap.position, { y: 1.35, duration: 0.25, ease: 'back.out(4)', overwrite: true }) // springs back up
     },
   }
 }
