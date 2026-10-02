@@ -14,13 +14,108 @@
     />
   </head>
   <body>
-    <main>
-      <section class="hero">
-        <p class="label">SERIES 01</p>
-        <h1 class="wordmark">KEYBO</h1>
-        <p class="tagline">Every mode. One board.</p>
+    <header class="nav">
+      <a class="nav-logo" href="#top">KEYBO</a>
+      <nav class="nav-links" aria-label="Main">
+        <a href="#modes">Modes</a>
+        <a href="#products">Products</a>
+        <a href="#story">Story</a>
+        <a href="#contact" class="nav-cta">Early access</a>
+      </nav>
+    </header>
+
+    <main id="top">
+      <!-- HERO: tall wrapper + sticky pin = scroll stage for the 3D scene -->
+      <section class="stage" id="stage">
+        <div class="stage-pin" id="stage-pin">
+          <div class="scene" id="scene">
+            <span class="label">KEYBOARD SCENE</span>
+          </div>
+          <div class="hero-copy">
+            <p class="label">SERIES 01</p>
+            <h1 class="wordmark">KEYBO</h1>
+            <p class="tagline">Every mode. One board.</p>
+          </div>
+          <p class="scroll-hint label">SCROLL TO OPEN</p>
+        </div>
+      </section>
+
+      <!-- MODES -->
+      <section class="section" id="modes">
+        <p class="label">01 / MODES</p>
+        <h2 class="h2">Pick your mode.</h2>
+        <div class="modes">
+          <button class="mode-btn" data-mode="play" aria-pressed="false"><span class="idx">01</span>Play</button>
+          <button class="mode-btn" data-mode="type" aria-pressed="false"><span class="idx">02</span>Type</button>
+          <button class="mode-btn" data-mode="work" aria-pressed="false"><span class="idx">03</span>Work</button>
+          <button class="mode-btn" data-mode="compact" aria-pressed="false"><span class="idx">04</span>Compact</button>
+        </div>
+        <p class="mode-line label" id="mode-line">Choose a mode to retune the whole site.</p>
+      </section>
+
+      <!-- PRODUCTS -->
+      <section class="section" id="products">
+        <p class="label">02 / PRODUCTS</p>
+        <h2 class="h2">Four boards. One idea.</h2>
+        <div class="cards">
+          <article class="card">
+            <p class="label">PLAY</p>
+            <h3>KEYBO Strike</h3>
+            <p>Built for speed. Every keystroke registers before you finish the thought.</p>
+            <ul class="specs"><li>1000 Hz POLLING</li><li>LINEAR SWITCHES</li><li>PER-KEY RGB</li></ul>
+            <a class="card-link" href="#contact">Details</a>
+          </article>
+          <article class="card">
+            <p class="label">TYPE</p>
+            <h3>KEYBO Flow</h3>
+            <p>Deep, tactile, satisfying. Made for people who write for hours.</p>
+            <ul class="specs"><li>TACTILE SWITCHES</li><li>GASKET MOUNT</li><li>FOAM DAMPENED</li></ul>
+            <a class="card-link" href="#contact">Details</a>
+          </article>
+          <article class="card">
+            <p class="label">WORK</p>
+            <h3>KEYBO Desk</h3>
+            <p>Quiet, steady and ready. Switch between three devices with one tap.</p>
+            <ul class="specs"><li>SILENT SWITCHES</li><li>3-DEVICE PAIRING</li><li>USB-C</li></ul>
+            <a class="card-link" href="#contact">Details</a>
+          </article>
+          <article class="card">
+            <p class="label">COMPACT</p>
+            <h3>KEYBO Mini</h3>
+            <p>Slim, light and wireless. Fits any bag, any desk, any plan.</p>
+            <ul class="specs"><li>75% LAYOUT</li><li>WIRELESS 2.4G / BT</li><li>4000 mAh</li></ul>
+            <a class="card-link" href="#contact">Details</a>
+          </article>
+        </div>
+      </section>
+
+      <!-- STORY -->
+      <section class="section story" id="story">
+        <p class="label">03 / STORY</p>
+        <h2 class="h2 big">A keyboard is a mood.</h2>
+        <div class="story-text">
+          <p>We build one board that changes with what you do. Play, type, work or travel, the board adapts. Same hands. Different mode.</p>
+          <p>Every switch tuned. Every key sound chosen. Nothing generic.</p>
+        </div>
+      </section>
+
+      <!-- CTA -->
+      <section class="section cta" id="contact">
+        <p class="label">04 / CONTACT</p>
+        <h2 class="h2 big">Get early access.</h2>
+        <p class="cta-sub">Join the waitlist for the first batch.</p>
+        <form class="form" id="waitlist" novalidate>
+          <input type="email" name="email" placeholder="you@email.com" aria-label="Email address" required />
+          <button type="submit">Join waitlist</button>
+        </form>
+        <p class="form-msg label" id="form-msg" role="status"></p>
       </section>
     </main>
+
+    <footer class="footer">
+      <p class="label">&copy; KEYBO. EVERY MODE. ONE BOARD.</p>
+    </footer>
+
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>
