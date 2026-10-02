@@ -285,3 +285,4 @@ html.lenis body { height: auto; }
   .spec-inner { transform: none; align-items: flex-start; }
   .spec-body { max-width: none; }
 }
+#modes { min-height: 120vh; } /* room for the keyboard to sit behind this section */

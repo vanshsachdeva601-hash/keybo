@@ -70,6 +70,7 @@ export function createKeyboard(world) {
 
   // ---------- Keys and switches ----------
   const keys = new Map() // code -> { cap, sw } (used later for live typing)
+  const lit = [] // keycaps that can glow, with their x position
   const capGeoCache = new Map() // one geometry per key width, reused
   const switchGeo = new RoundedBoxGeometry(0.55, 0.5, 0.55, 2, 0.05)
 
@@ -86,7 +87,9 @@ export function createKeyboard(world) {
       if (!capGeoCache.has(key.w)) {
         capGeoCache.set(key.w, new RoundedBoxGeometry(key.w - GAP, 0.5, 1 - GAP, seg, 0.08))
       }
-      const cap = new THREE.Mesh(capGeoCache.get(key.w), key.a ? accentMat : capMat)
+      const mat = key.a ? accentMat : capMat.clone() // own material so each key can glow separately
+      const cap = new THREE.Mesh(capGeoCache.get(key.w), mat)
+      if (!key.a) lit.push({ mat, x: cx })
       cap.position.set(cx, 1.35, z)
       layers.keycaps.add(cap)
 
@@ -111,6 +114,32 @@ export function createKeyboard(world) {
     float.position.y = Math.sin(t * 0.8) * 0.08
   })
 
+    // ---------- Mode lighting: every frame, each key gets an emissive color ----------
+  let mode = 'none'
+  const fx = { pulse: 0 } // short flash when the mode changes
+  const tmp = new THREE.Color(0xedebe6)
+
+  onTick((t) => {
+    lit.forEach(({ mat, x }) => {
+      let intensity = 0
+      if (mode === 'play') {
+        tmp.setHSL((x * 0.045 + t * 0.35) % 1, 1, 0.5) // hue moves along x and over time = wave
+        intensity = 0.55
+      } else if (mode === 'type') {
+        tmp.set(0xffb020)
+        intensity = 0.14 + Math.sin(t * 1.6 + x * 0.15) * 0.05
+      } else if (mode === 'work') {
+        tmp.set(0x3da5ff)
+        intensity = 0.1
+      } else if (mode === 'compact') {
+        tmp.set(0x7cffb2)
+        intensity = 0.14 + Math.sin(t * 2 - x * 0.4) * 0.05
+      }
+      mat.emissive.copy(tmp)
+      mat.emissiveIntensity = intensity + fx.pulse
+    })
+  })
+
   return {
     root,
     float,
@@ -122,6 +151,18 @@ export function createKeyboard(world) {
       const c = new THREE.Color(hex)
       gsap.to(accentMat.color, { r: c.r, g: c.g, b: c.b, duration: 0.4 })
       gsap.to(accentLight.color, { r: c.r, g: c.g, b: c.b, duration: 0.4 })
+    },
+        setMode(name) {
+      mode = name
+      gsap.fromTo(fx, { pulse: 0.9 }, { pulse: 0, duration: 0.9, ease: 'power2.out', overwrite: true })
+      const compact = name === 'compact'
+      gsap.to(float.scale, {
+        x: compact ? 0.78 : 1,
+        y: compact ? 0.55 : 1,
+        z: compact ? 0.78 : 1,
+        duration: 0.8,
+        ease: 'power3.inOut',
+      })
     },
   }
 }

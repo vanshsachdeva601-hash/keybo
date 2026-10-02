@@ -3,7 +3,7 @@ import * as THREE from 'three'
 
 // For each layer: where it sits at rest (y), how far it flies when exploded (offset),
 // and when (on the timeline) it starts moving.
-const LAYERS = [
+export const LAYERS = [
   { name: 'keycaps', restY: 1.35, offset: 3.8, at: 2.0 },
   { name: 'switches', restY: 0.86, offset: 1.2, at: 2.4 },
   { name: 'plate', restY: 0.55, offset: -1.4, at: 2.8 },
