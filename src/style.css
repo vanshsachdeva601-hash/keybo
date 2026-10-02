@@ -106,7 +106,7 @@ a { color: inherit; text-decoration: none; }
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  padding-top: clamp(5.5rem, 14vh, 9rem);
+  padding-top: clamp(4.5rem, 10vh, 7rem);
   gap: 1rem;
   text-align: center;
   pointer-events: none;
@@ -236,3 +236,52 @@ html.lenis,
 html.lenis body { height: auto; }
 .lenis.lenis-smooth { scroll-behavior: auto !important; }
 .lenis.lenis-stopped { overflow: hidden; }
+/* ---------- Spec labels (follow the 3D layers while the keyboard explodes) ---------- */
+.spec-labels {
+  position: fixed;
+  inset: 0;
+  z-index: 3; /* above the canvas */
+  pointer-events: none;
+}
+.spec {
+  position: absolute;
+  left: 0;
+  top: 0;
+  opacity: 0;
+  visibility: hidden;
+}
+.spec-inner {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  transform: translateY(-50%); /* centers the label on its anchor point */
+}
+.spec-line {
+  width: 3.5rem;
+  height: 1px;
+  background: var(--accent);
+  flex: none;
+}
+.spec-body { max-width: 14rem; }
+.spec-title {
+  font-family: var(--font-head);
+  font-weight: 700;
+  font-size: 1.15rem;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  margin: 0.25rem 0;
+}
+.spec-text { font-size: 0.82rem; color: var(--muted); line-height: 1.45; }
+
+@media (max-width: 768px) {
+  /* Phones: one caption at a time, pinned near the bottom */
+  .spec {
+    left: var(--pad);
+    right: var(--pad);
+    top: auto;
+    bottom: 4.5rem;
+    transform: none !important;
+  }
+  .spec-inner { transform: none; align-items: flex-start; }
+  .spec-body { max-width: none; }
+}

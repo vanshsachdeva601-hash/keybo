@@ -4,6 +4,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import Lenis from 'lenis'
 import { createScene } from './scene.js'
 import { createKeyboard } from './keyboard.js'
+import { initHero } from './hero.js'
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -27,6 +28,7 @@ document.querySelectorAll('a[href^="#"]').forEach((a) => {
 const world = createScene(document.querySelector('#webgl'))
 const keyboard = createKeyboard(world)
 world.fit(keyboard.width)
+initHero(world, keyboard)
 
 // Pause rendering when the hero is off screen, and fade the canvas out as the hero ends
 ScrollTrigger.create({
