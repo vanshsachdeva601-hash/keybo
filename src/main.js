@@ -6,6 +6,8 @@ import { createScene } from './scene.js'
 import { createKeyboard } from './keyboard.js'
 import { initHero } from './hero.js'
 import { initModes } from './modes.js'
+import { audio } from './audio.js'
+import { initTyping } from './typing.js'
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -32,13 +34,20 @@ world.fit(keyboard.width)
 initHero(world, keyboard)
 initModes(world, keyboard)
 
+// Typing only reacts while the keyboard is on screen
+let kbActive = true
+initTyping(keyboard, audio, () => kbActive)
+
 // Render only while the keyboard is on screen (hero + modes), then fade it out
 ScrollTrigger.create({
   trigger: '#stage',
   start: 'top bottom',
   endTrigger: '#modes',
   end: 'bottom top',
-  onToggle: (self) => world.setRunning(self.isActive),
+  onToggle: (self) => {
+    kbActive = self.isActive
+    world.setRunning(self.isActive)
+  },
 })
 gsap.to('#webgl', {
   opacity: 0,
@@ -66,6 +75,9 @@ function setMode(name) {
   modeLine.textContent = mode.line
   keyboard.setAccent(mode.color)
   keyboard.setMode(name)
+  audio.unlock()
+  audio.setProfile(name)
+  audio.tick() // a click so you hear the new mode right away
   buttons.forEach((btn) => {
     const active = btn.dataset.mode === name
     btn.classList.toggle('is-active', active)

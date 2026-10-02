@@ -89,11 +89,12 @@ export function createKeyboard(world) {
       }
       const mat = key.a ? accentMat : capMat.clone() // own material so each key can glow separately
       const cap = new THREE.Mesh(capGeoCache.get(key.w), mat)
-      if (!key.a) lit.push({ mat, x: cx })
+      const item = { mat, x: cx, z, glow: { v: 0 } } // glow.v = extra brightness from a key press ripple
+      if (!key.a) lit.push(item)
       cap.position.set(cx, 1.35, z)
       layers.keycaps.add(cap)
 
-      keys.set(key.code, { cap, sw })
+      keys.set(key.code, { cap, sw, x: cx, z })
       x += key.w
     })
   })
