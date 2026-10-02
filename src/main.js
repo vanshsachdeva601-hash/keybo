@@ -7,7 +7,6 @@ import { createKeyboard } from './keyboard.js'
 import { initHero } from './hero.js'
 import { initModes } from './modes.js'
 
-
 gsap.registerPlugin(ScrollTrigger)
 
 // ---------- Smooth scroll, synced with GSAP ----------
@@ -61,10 +60,11 @@ const modeLine = document.querySelector('#mode-line')
 
 function setMode(name) {
   const mode = MODES[name]
+  console.log('mode set:', name) // temporary, for debugging
   root.style.setProperty('--accent', mode.color)
   root.dataset.mode = name
   modeLine.textContent = mode.line
-  keyboard.setAccent(mode.color) // keyboard accent keys follow the mode
+  keyboard.setAccent(mode.color)
   keyboard.setMode(name)
   buttons.forEach((btn) => {
     const active = btn.dataset.mode === name
