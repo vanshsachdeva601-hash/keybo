@@ -465,3 +465,13 @@ body:has(#intro) { overflow: hidden; } /* no scrolling while the intro is up */
 #intro-count { display: none; }
 .intro.is-loading #intro-count { display: block; }
 .intro.is-loading .intro-btn { display: none; }
+/* ---------- Intro button: explicit colours so it is always readable ---------- */
+.intro-btn {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--text);
+}
+.intro-btn:hover {
+  background: var(--text);
+  color: var(--bg);
+}
