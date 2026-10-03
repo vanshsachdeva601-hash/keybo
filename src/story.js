@@ -32,7 +32,7 @@ export function initStory(mobile) {
   scene.add(root)
 
   const dark = new THREE.Color(0x1b1b1e)
-  const accent = new THREE.Color(0xedebe6)
+  const accent = new THREE.Color(0x3da5ff)
   const accentIdx = []
   const rnd = (a, b) => a + Math.random() * (b - a)
   const widths = [1, 1, 1.5, 2]

@@ -2,7 +2,7 @@
 @property --accent {
   syntax: "<color>";
   inherits: true;
-  initial-value: #edebe6;
+  initial-value: #3da5ff;
 }
 
 /* ---------- Design tokens ---------- */
@@ -12,7 +12,7 @@
   --border: #26262a;
   --text: #edebe6;
   --muted: #8a8a90;
-  --accent: #edebe6;
+  --accent: #3da5ff;
 
   --font-head: "Space Grotesk", system-ui, sans-serif;
   --font-body: "Inter", system-ui, sans-serif;

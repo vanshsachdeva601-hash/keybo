@@ -2,7 +2,8 @@ import * as THREE from 'three'
 import gsap from 'gsap'
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js'
 import { createFrontLegends } from './legends.js'
-import { grainTexture, brushedTexture, fabricTexture, deskDesignTexture, topoTexture } from './textures.js'
+import { createContourMaterial, buildCapGeometry, placeFrontLegend } from './keycap.js'
+import { grainTexture, brushedTexture, fabricTexture, deskDesignTexture } from './textures.js'
 
 // ---------- Layout: a 75% keyboard. k(code, width). gap(width) = empty space. Width 1 = a normal key. ----------
 const k = (code, w = 1) => ({ code, w })
@@ -23,7 +24,8 @@ const ROW_H = [0.58, 0.66, 0.62, 0.58, 0.55, 0.52] // keycap height per row (bac
 const ROW_SLOPE = [0.26, 0.24, 0.17, 0.1, 0.04, -0.02] // how much the top of the cap leans toward you
 const GAP = 0.14 // space between keycaps. The LED light shows through it.
 const INSET = 0.09 // the top of a keycap is smaller than its bottom by this much on every side
-const CAP_BASE = 1.1 // height of the underside of every keycap
+const CAP_BASE = 0.95 // height of the underside of every keycap. Lower = keys sit closer to the case.
+const SW_Y = 0.78 // centre height of the switches (they fill the space between plate and keycap)
 const TILT = 0.1 // the keyboard is raised at the back, like a real typing angle (radians)
 
 const KEYS = []
@@ -56,7 +58,7 @@ const CASE_D = ZF - ZB
 const CASE_CX = (X0 + X1) / 2
 const CASE_CZ = (ZB + ZF) / 2
 const RIM_Y = 0.45
-const RIM_H = 0.25
+const RIM_H = 0.4 // height of the bezel. Taller = keys sit lower inside the case.
 const RIM_TOP = RIM_Y + RIM_H + 0.05
 // The opening in the bezel (x, z). It has a notch, because the knob sits on solid case at the top right.
 const POCKET = [[-0.1, -0.56], [14.75, -0.56], [14.75, 0.78], [16.1, 0.78], [16.1, 5.9], [-0.1, 5.9]]
@@ -64,15 +66,9 @@ const POCKET = [[-0.1, -0.56], [14.75, -0.56], [14.75, 0.78], [16.1, 0.78], [16.
 const MAT_W = 24
 const MAT_H = ((MAT_W - 0.4) * 972) / 2048 + 0.3 // the printed design has a 2048 x 972 ratio
 
-// The topographic map covers this area (key units)
-const TEX_X0 = -0.3
-const TEX_X1 = 16.3
-const TEX_Z0 = -0.6
-const TEX_Z1 = 5.95
-
-const DEFAULT_LED = 0x00e5ff // LED colour before any mode is chosen: the electric blue of the real board
-const MODE_COLOR = { type: 0xffb020, work: 0x3da5ff, compact: 0x7cffb2 } // Play is a rainbow, see the tick below
-const TOPO_BASE = new THREE.Color(0xc9d6e8) // colour of the contour lines
+const DEFAULT_LED = 0x3da5ff // colour before any mode is chosen: the sky blue
+const MODE_COLOR = { type: 0xffb020, work: 0xc7ccd6, compact: 0x7cffb2 } // Play is a rainbow, see the tick below
+const LINE_BASE = new THREE.Color(0x8a94a3) // colour of the contour lines
 const WHITE = new THREE.Color(0xffffff)
 
 // A soft glowing square, used for the faint haze over the plate
@@ -87,40 +83,6 @@ function glowTexture() {
   const t = new THREE.CanvasTexture(c)
   t.colorSpace = THREE.SRGBColorSpace
   return t
-}
-
-// A keycap: a rounded box whose top is smaller than its bottom and leans toward you
-function makeCap(w, row, seg) {
-  const h = ROW_H[row]
-  const dx = w - GAP
-  const dz = 1 - GAP
-  const g = new RoundedBoxGeometry(dx, h, dz, seg, 0.07)
-  const p = g.attributes.position
-  for (let i = 0; i < p.count; i++) {
-    const t = (p.getY(i) + h / 2) / h // 0 at the bottom, 1 at the top
-    const x = p.getX(i)
-    const z = p.getZ(i)
-    p.setX(i, x * (1 - (2 * INSET * t) / dx)) // narrower toward the top
-    p.setZ(i, z * (1 - (2 * INSET * t) / dz))
-    p.setY(i, p.getY(i) - z * ROW_SLOPE[row] * t) // front of the top is lower
-  }
-  p.needsUpdate = true
-  g.computeBoundingSphere()
-  return g
-}
-
-// A thin plane lying on top of a keycap that shows its own piece of the contour map
-function topoPlane(cx, z, w) {
-  const g = new THREE.PlaneGeometry(w - 0.4, 0.62)
-  g.rotateX(-Math.PI / 2)
-  const pos = g.attributes.position
-  const uv = g.attributes.uv
-  for (let i = 0; i < pos.count; i++) {
-    const wx = cx + pos.getX(i)
-    const wz = z + pos.getZ(i)
-    uv.setXY(i, (wx - TEX_X0) / (TEX_X1 - TEX_X0), 1 - (wz - TEX_Z0) / (TEX_Z1 - TEX_Z0))
-  }
-  return g
 }
 
 // A flat ring around one key (cell size minus cap size). It lights the gaps between keys.
@@ -189,22 +151,16 @@ export function createKeyboard(world) {
 
   // ---------- Surface textures (all generated in code) ----------
   const grain = grainTexture(isMobile ? 128 : 256)
-  const brushed = brushedTexture(isMobile ? 256 : 512)
   const fabric = fabricTexture(isMobile ? 128 : 256)
   fabric.repeat.set(16, 7)
-  const topo = topoTexture(TEX_X1 - TEX_X0, TEX_Z1 - TEX_Z0, isMobile)
 
   // ---------- Materials: matte black, nothing here emits light ----------
   const caseMat = new THREE.MeshStandardMaterial({ color: 0x121214, metalness: 0.1, roughness: 0.78, bumpMap: grain, bumpScale: 0.08 })
   const rimMat = new THREE.MeshStandardMaterial({ color: 0x121214, metalness: 0.1, roughness: 0.78 }) // the extruded frame has no usable UVs, so no bump
   const plateMat = new THREE.MeshStandardMaterial({ color: 0x0d0d0f, metalness: 0.2, roughness: 0.8 })
   const switchMat = new THREE.MeshStandardMaterial({ color: 0x1c1c20, roughness: 0.75 })
-  const capMat = new THREE.MeshStandardMaterial({ color: 0x131315, roughness: 0.93, bumpMap: grain, bumpScale: 0.1 }) // matte PBT, shared by all keys
+  const cap = createContourMaterial({ px: isMobile ? 1.0 : 1.25, bump: grain }) // one matte material with the contour print, shared by all keys
   const deskMat = new THREE.MeshStandardMaterial({ color: 0x151517, roughness: 0.95, bumpMap: fabric, bumpScale: 0.5 })
-  const topoMat = new THREE.MeshBasicMaterial({
-    map: topo, transparent: true, opacity: 0.9, depthWrite: false, color: TOPO_BASE,
-    polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2,
-  })
 
   const accentLight = new THREE.PointLight(DEFAULT_LED, 12, 22, 2)
   accentLight.position.set(0, 4, 3)
@@ -282,20 +238,20 @@ export function createKeyboard(world) {
   haze.position.set(8, 0.63, 2.67)
   layers.plate.add(haze)
 
-  // ---------- Keys: switch, LED ring, keycap with contour lines and a legend on its front ----------
+  // ---------- Keys: switch, LED ring, keycap (contour print on every face) and a legend on its front ----------
   const keys = new Map() // code -> { cap, sw, glow, x, z, restY } (used for typing and the intro)
   const lit = [] // one entry per key: its LED ring, its legend material and its ripple value
-  const capCache = new Map()
-  const switchGeo = new RoundedBoxGeometry(0.55, 0.5, 0.55, 2, 0.05)
+  const switchGeo = new RoundedBoxGeometry(0.55, 0.34, 0.55, 2, 0.05)
   const legends = createFrontLegends(KEYS.map((key) => labelFor(key.code)), isMobile)
 
   KEYS.forEach((key) => {
     const { cx, z, w, row } = key
     const h = ROW_H[row]
     const slope = ROW_SLOPE[row]
+    const restY = CAP_BASE + h / 2
 
     const sw = new THREE.Mesh(switchGeo, switchMat)
-    sw.position.set(cx, 0.86, z)
+    sw.position.set(cx, SW_Y, z)
     layers.switches.add(sw)
 
     // The LED: a ring on the plate. The keycap hides all of it except what shows through the gaps.
@@ -306,37 +262,23 @@ export function createKeyboard(world) {
     ring.position.set(cx, 0.625, z)
     layers.plate.add(ring) // it travels with the plate when the keyboard opens
 
-    const ck = `${w}-${row}`
-    if (!capCache.has(ck)) capCache.set(ck, makeCap(w, row, seg))
-    const cap = new THREE.Mesh(capCache.get(ck), capMat)
+    // Every key has its own geometry, because the contour pattern depends on where the key sits on the board
+    const capGeo = buildCapGeometry({
+      dx: w - GAP, h, dz: 1 - GAP, inset: INSET, slope, seg, radius: 0.07,
+      offset: new THREE.Vector3(cx, restY, z),
+    })
+    const capMesh = new THREE.Mesh(capGeo, cap.material)
 
-    // contour lines on top
-    const topoMesh = new THREE.Mesh(topoPlane(cx, z, w), topoMat)
-    topoMesh.position.set(0, h / 2 + 0.004, 0)
-    topoMesh.rotation.x = Math.atan(slope) // follows the lean of the top
-    cap.add(topoMesh)
-
-    // legend on the front face, tilted back like the face itself
+    // legend on the front face
     const legend = legends.plane(labelFor(key.code))
-    const d = 1 - GAP
-    const zTop = d / 2 - INSET
-    const dy = h / 2 - zTop * slope + h / 2
-    const phi = Math.atan2(INSET, dy)
-    const f = 0.42
-    legend.position.set(
-      0,
-      -h / 2 + dy * f + Math.sin(phi) * 0.006,
-      d / 2 - INSET * f + Math.cos(phi) * 0.006
-    )
-    legend.rotation.x = -phi
-    cap.add(legend)
+    placeFrontLegend(legend, { d: 1 - GAP, h, inset: INSET, slope })
+    capMesh.add(legend)
 
-    const restY = CAP_BASE + h / 2
-    cap.position.set(cx, restY, z)
-    layers.keycaps.add(cap)
+    capMesh.position.set(cx, restY, z)
+    layers.keycaps.add(capMesh)
 
     lit.push({ led: ledMat, legend: legend.material || null, x: cx, z, glow: { v: 0 } }) // glow.v = extra light from a key press ripple
-    keys.set(key.code, { cap, sw, glow: ring, x: cx, z, restY })
+    keys.set(key.code, { cap: capMesh, sw, glow: ring, x: cx, z, restY })
   })
 
   // ---------- Idle float + mouse tilt ----------
@@ -366,7 +308,7 @@ export function createKeyboard(world) {
     else target.set(MODE_COLOR[mode] ?? DEFAULT_LED)
     decalMat.color.lerp(target, 0.08) // fades smoothly from one mode colour to the next
     hazeMat.color.copy(target)
-    topoMat.color.copy(TOPO_BASE).lerp(target, 0.2) // the lines pick up a little of the LED colour
+    cap.lineColor.copy(LINE_BASE).lerp(target, 0.2) // the printed lines pick up a little of the LED colour
 
     lit.forEach((o) => {
       let I
@@ -374,16 +316,16 @@ export function createKeyboard(world) {
         tmp.setHSL((o.x * 0.045 + t * 0.35) % 1, 1, 0.5) // hue moves along x and over time = wave
         I = 0.95
       } else if (mode === 'type') {
-        tmp.set(0xffb020)
+        tmp.set(MODE_COLOR.type)
         I = 0.8 + Math.sin(t * 1.6 + o.x * 0.15) * 0.1
       } else if (mode === 'work') {
-        tmp.set(0x3da5ff)
+        tmp.set(MODE_COLOR.work)
         I = 0.8
       } else if (mode === 'compact') {
-        tmp.set(0x7cffb2)
+        tmp.set(MODE_COLOR.compact)
         I = 0.85 + Math.sin(t * 2 - o.x * 0.4) * 0.1
       } else {
-        tmp.set(DEFAULT_LED) // before any mode: a steady electric blue that gently breathes
+        tmp.set(DEFAULT_LED) // before any mode: a steady sky blue that gently breathes
         I = 0.85 + Math.sin(t * 1.2 + o.x * 0.2) * 0.06
       }
       const level = I + o.glow.v
@@ -404,7 +346,8 @@ export function createKeyboard(world) {
     labelX: { keycaps: 16.6, switches: 16.6, plate: 16.6, case: X1 + 0.4 },
     labelZ: CASE_CZ,
     setAccent(hex) {
-      gsap.to(accentLight.color, { r: new THREE.Color(hex).r, g: new THREE.Color(hex).g, b: new THREE.Color(hex).b, duration: 0.4 })
+      const c = new THREE.Color(hex)
+      gsap.to(accentLight.color, { r: c.r, g: c.g, b: c.b, duration: 0.4 })
     },
     setMode(name) {
       mode = name
@@ -442,18 +385,18 @@ export function createKeyboard(world) {
     },
     // Intro: keys wait out of sight, then fall onto the board one by one
     hideForIntro() {
-      keys.forEach(({ cap, sw, glow }) => { cap.visible = false; sw.visible = false; glow.visible = false })
+      keys.forEach(({ cap: c, sw, glow }) => { c.visible = false; sw.visible = false; glow.visible = false })
     },
     dropIn(audio) {
       let i = 0
-      keys.forEach(({ cap, sw, glow, x, z, restY }) => {
+      keys.forEach(({ cap: c, sw, glow, x, z, restY }) => {
         const delay = 0.1 + x * 0.035 + z * 0.05 + Math.random() * 0.12 // left to right, back to front
-        cap.visible = true
+        c.visible = true
         sw.visible = true
         gsap.delayedCall(delay + 0.7, () => { glow.visible = true }) // the LED turns on once the key has landed
-        gsap.fromTo(cap.position, { y: restY + 8 + Math.random() * 5 }, { y: restY, duration: 0.9, delay, ease: 'bounce.out' })
-        gsap.fromTo(cap.rotation, { x: (Math.random() - 0.5) * 1.6, z: (Math.random() - 0.5) * 1.2 }, { x: 0, z: 0, duration: 0.9, delay, ease: 'power3.out' })
-        gsap.fromTo(sw.position, { y: 6 + Math.random() * 3 }, { y: 0.86, duration: 0.7, delay, ease: 'power3.out' })
+        gsap.fromTo(c.position, { y: restY + 8 + Math.random() * 5 }, { y: restY, duration: 0.9, delay, ease: 'bounce.out' })
+        gsap.fromTo(c.rotation, { x: (Math.random() - 0.5) * 1.6, z: (Math.random() - 0.5) * 1.2 }, { x: 0, z: 0, duration: 0.9, delay, ease: 'power3.out' })
+        gsap.fromTo(sw.position, { y: 6 + Math.random() * 3 }, { y: SW_Y, duration: 0.7, delay, ease: 'power3.out' })
         if (i++ % 4 === 0) gsap.delayedCall(delay + 0.45, () => audio.tick()) // a click for every 4th key
       })
     },

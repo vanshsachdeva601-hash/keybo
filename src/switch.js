@@ -1,4 +1,5 @@
-import { createLegends } from './legends.js'
+import { createFrontLegends } from './legends.js'
+import { createContourMaterial, buildCapGeometry, placeFrontLegend } from './keycap.js'
 import * as THREE from 'three'
 import gsap from 'gsap'
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js'
@@ -25,9 +26,8 @@ export function createSwitch(world) {
     color: 0x9a9ca4, metalness: 0.1, roughness: 0.15,
     transparent: true, opacity: 0.28, depthWrite: false, // see-through top housing = cutaway look
   })
-  const stemMat = new THREE.MeshStandardMaterial({ color: 0xedebe6, roughness: 0.4 }) // follows the mode accent
+  const stemMat = new THREE.MeshStandardMaterial({ color: 0x3da5ff, roughness: 0.4 }) // follows the mode accent  const springMat = new THREE.MeshStandardMaterial({ color: 0xc8cbd2, metalness: 1, roughness: 0.3 })
   const springMat = new THREE.MeshStandardMaterial({ color: 0xc8cbd2, metalness: 1, roughness: 0.3 })
-  const capMat = new THREE.MeshStandardMaterial({ color: 0x1a1a1d, roughness: 0.88 })
   // Every part is a group sitting at its "rest" height, so scroll can move it up and down
   const parts = {}
   function add(name, y, ...meshes) {
@@ -69,9 +69,19 @@ export function createSwitch(world) {
   add('stem', 1.95, body, crossA, crossB)
 
   // Keycap
-  const capMesh = new THREE.Mesh(new RoundedBoxGeometry(1.35, 0.75, 1.35, 3, 0.1), capMat)
-  const kLegend = createLegends(['K'], isMobile).plane('K', false, 0.378) // 0.375 is the top face of the cap
-  kLegend.scale.set(1.5, 1, 1.5) // this key is bigger than a normal one, so the letter is scaled up
+    // Keycap: the same shape, contour print and side-printed legend as the keys on the keyboard, just bigger
+  const SC = 1.35 / 0.86 // this keycap is that much bigger than a keyboard keycap
+  const capDims = { d: 0.86 * SC, h: 0.75, inset: 0.09 * SC, slope: 0.1 }
+  const cap = createContourMaterial({ px: isMobile ? 2.4 : 3.4 }) // thicker lines, because the cap is bigger on screen
+  cap.lineColor.lerp(new THREE.Color(0x3da5ff), 0.2)
+  const capGeo = buildCapGeometry({
+    dx: 0.86 * SC, h: capDims.h, dz: capDims.d, inset: capDims.inset, slope: capDims.slope,
+    seg: isMobile ? 1 : 3, radius: 0.07 * SC, offset: new THREE.Vector3(7, 0, 2), patScale: 1 / SC, // 1 / SC keeps the density of a real keycap
+  })
+  const capMesh = new THREE.Mesh(capGeo, cap.material)
+  const kLegend = createFrontLegends(['K'], isMobile).plane('K')
+  kLegend.material.color.set(0x3da5ff)
+  placeFrontLegend(kLegend, { ...capDims, scale: SC })
   capMesh.add(kLegend)
   add('keycap', 3.0, capMesh)
   return {
@@ -80,6 +90,8 @@ export function createSwitch(world) {
     setAccent(hex) {
       const c = new THREE.Color(hex)
       gsap.to(stemMat.color, { r: c.r, g: c.g, b: c.b, duration: 0.4 })
+      gsap.to(kLegend.material.color, { r: c.r, g: c.g, b: c.b, duration: 0.4 }) // the printed K takes the mode colour
+      cap.lineColor.set(0x8a94a3).lerp(c, 0.2)
     },
   }
 }
@@ -99,7 +111,7 @@ export function initSwitch(world, sw) {
   const rest = (n) => parts[n].userData.rest
   const zoomFor = (dist) => () => world.baseDist() / dist // camera distance -> zoom value
 
-  const lookX = mobile ? 0 : -2 // negative = switch appears on the right, text on the left
+  const lookX = mobile ? 0 : -2.8 // negative = switch appears on the right, text on the left
   const closed = { zoom: zoomFor(11), lookY: SW_Y + (mobile ? 1.2 : 1.8) }
   const open = { zoom: zoomFor(17), lookY: SW_Y + (mobile ? 1.8 : 3) }
 

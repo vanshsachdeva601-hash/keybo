@@ -19,7 +19,9 @@ btn.addEventListener('click', async () => {
   // The counter eases toward 90% while the app loads, then finishes at 100%
   let shown = 0
   let target = 90
+  let failed = false
   const step = () => {
+    if (failed) return // stop updating, so an error message stays on screen
     shown += (target - shown) * 0.08
     count.textContent = String(Math.round(shown)).padStart(3, '0')
     if (shown < 99.5) requestAnimationFrame(step)
@@ -33,7 +35,8 @@ btn.addEventListener('click', async () => {
     await new Promise((r) => setTimeout(r, 400))
     app.reveal(intro)
   } catch (err) {
+    failed = true
     console.error(err)
-    count.textContent = 'ERROR / RELOAD'
+    count.textContent = 'ERROR / OPEN CONSOLE'
   }
 })
