@@ -396,10 +396,6 @@ html.has-cursor * { cursor: none !important; }
   line-height: 0.9;
 }
 .intro-btn {
-  opacity: 0;
-  visibility: hidden;
-  transform: translateY(12px);
-  background: none;
   color: var(--text);
   border: 1px solid var(--text);
   font-family: var(--font-mono);
@@ -450,3 +446,22 @@ kbd {
   padding: 0.1rem 0.45rem;
 }
 @media (hover: none) { .shortcuts { display: none; } } /* touch screens have no keyboard */
+/* ---------- Intro: button visible from the start, counter shows only while loading ---------- */
+body:has(#intro) { overflow: hidden; } /* no scrolling while the intro is up */
+.intro-btn { animation: intro-in 0.8s 0.2s both; }
+@keyframes intro-in { from { opacity: 0; transform: translateY(12px); } }
+#intro-count { display: none; }
+.intro.is-loading #intro-count { display: block; }
+.intro.is-loading .intro-btn { display: none; }
+/* ---------- Intro: button visible from the start, counter shows only while loading ---------- */
+body:has(#intro) { overflow: hidden; } /* no scrolling while the intro is up */
+.intro-btn {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+  animation: intro-in 0.8s 0.2s both;
+}
+@keyframes intro-in { from { opacity: 0; transform: translateY(12px); } }
+#intro-count { display: none; }
+.intro.is-loading #intro-count { display: block; }
+.intro.is-loading .intro-btn { display: none; }
