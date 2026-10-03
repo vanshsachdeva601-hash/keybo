@@ -7,6 +7,7 @@ import { createKeyboard } from './keyboard.js'
 import { initHero } from './hero.js'
 import { initModes } from './modes.js'
 import { createSwitch, initSwitch } from './switch.js'
+import { initProducts } from './products.js'
 import { audio } from './audio.js'
 import { initTyping } from './typing.js'
 
@@ -37,6 +38,7 @@ initModes(world, keyboard)
 
 const sw = createSwitch(world)
 initSwitch(world, sw)
+initProducts(world.isMobile)
 
 // Typing only reacts while the keyboard is on screen
 let kbActive = true
