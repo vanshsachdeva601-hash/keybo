@@ -29,7 +29,7 @@ export function initMotion() {
   })
 
   // ---------- 2) Mono labels: typewriter ----------
-  document.querySelectorAll('.section > .label:first-child').forEach((el) => {
+  document.querySelectorAll('.section > p.label:first-of-type').forEach((el) => {
     const text = el.textContent.trim()
     el.textContent = '\u00A0' // keeps the line height while empty
     const n = { v: 0 }

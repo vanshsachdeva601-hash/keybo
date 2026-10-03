@@ -9,7 +9,7 @@ export function initTyping (keyboard, audio, isActive) {
   const isField = (el) => el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA')
 
   window.addEventListener('keydown', (e) => {
-    if (!isActive() || isField(e.target) || e.metaKey || e.ctrlKey) return
+    if (!isActive() || isField(e.target) || e.metaKey || e.ctrlKey || e.altKey) return
     audio.unlock()
     if (e.code === 'Space') e.preventDefault() // stop Space from scrolling the page
     if (e.repeat) return // ignore auto-repeat while a key is held

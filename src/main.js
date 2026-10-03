@@ -8,12 +8,17 @@ import { initHero } from './hero.js'
 import { initModes } from './modes.js'
 import { createSwitch, initSwitch } from './switch.js'
 import { initProducts } from './products.js'
+import { initStory } from './story.js'
+import { initCta } from './cta.js'
 import { initMotion } from './motion.js'
 import { initCursor, initMagnetic } from './cursor.js'
+import { initIntro } from './intro.js'
+import { initShortcuts } from './shortcuts.js'
 import { audio } from './audio.js'
 import { initTyping } from './typing.js'
 
 gsap.registerPlugin(ScrollTrigger)
+history.scrollRestoration = 'manual' // always start at the top, so the intro plays from the beginning
 
 // ---------- Smooth scroll, synced with GSAP ----------
 const lenis = new Lenis()
@@ -21,7 +26,6 @@ lenis.on('scroll', ScrollTrigger.update)
 gsap.ticker.add((time) => lenis.raf(time * 1000))
 gsap.ticker.lagSmoothing(0)
 
-// Nav links glide instead of jumping
 document.querySelectorAll('a[href^="#"]').forEach((a) => {
   a.addEventListener('click', (e) => {
     const target = document.querySelector(a.getAttribute('href'))
@@ -41,16 +45,31 @@ initModes(world, keyboard)
 const sw = createSwitch(world)
 initSwitch(world, sw)
 initProducts(world.isMobile)
+const story = initStory(world.isMobile)
+const cta = initCta(world.isMobile)
 
 // ---------- Motion layer ----------
 initMotion()
 initCursor()
 initMagnetic()
-window.addEventListener('load', () => ScrollTrigger.refresh()) // recalculate positions once everything has loaded
+initShortcuts(lenis)
+window.addEventListener('load', () => ScrollTrigger.refresh())
 
-// Typing only reacts while the keyboard is on screen
+// ---------- Intro ----------
+let introDone = false
+initIntro({
+  lenis,
+  audio,
+  keyboard,
+  onDone: () => {
+    introDone = true
+    ScrollTrigger.refresh()
+  },
+})
+
+// Typing only reacts while the keyboard is on screen and the intro is over
 let kbActive = true
-initTyping(keyboard, audio, () => kbActive)
+initTyping(keyboard, audio, () => kbActive && introDone)
 ScrollTrigger.create({
   trigger: '#stage',
   start: 'top bottom',
@@ -59,7 +78,7 @@ ScrollTrigger.create({
   onToggle: (self) => { kbActive = self.isActive },
 })
 
-// Render only while a 3D scene is visible (hero, modes, switch), then fade the canvas out
+// Render the main canvas only while a 3D scene is visible (hero, modes, switch), then fade it out
 ScrollTrigger.create({
   trigger: '#stage',
   start: 'top bottom',
@@ -93,6 +112,8 @@ function setMode(name) {
   keyboard.setAccent(mode.color)
   keyboard.setMode(name)
   sw.setAccent(mode.color)
+  story.setAccent(mode.color)
+  cta.setAccent(mode.color)
   audio.unlock()
   audio.setProfile(name)
   audio.tick()
@@ -117,6 +138,7 @@ form.addEventListener('submit', (e) => {
   if (valid) {
     form.reset()
     audio.unlock()
-    audio.tick() // a key click as the "success" sound
+    audio.tick()
+    cta.celebrate() // light wave across the CTA keyboard
   }
 })

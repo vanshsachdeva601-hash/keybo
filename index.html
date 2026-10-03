@@ -14,6 +14,15 @@
     />
   </head>
   <body>
+    <div class="intro" id="intro">
+  <div class="intro-inner">
+    <p class="label">KEYBO / SERIES 01</p>
+    <p class="intro-title">KEYBO</p>
+    <p class="label" id="intro-count">000</p>
+    <button class="intro-btn" id="intro-enter" type="button">Enter KEYBO</button>
+    <p class="label">SOUND ON RECOMMENDED</p>
+  </div>
+</div>
     <canvas id="webgl"></canvas>
     <div class="spec-labels" id="spec-labels" aria-hidden="true">
   <div class="spec" data-layer="keycaps">
@@ -184,6 +193,7 @@
 
       <!-- STORY -->
       <section class="section story" id="story">
+        <div class="story-3d" id="story-3d" aria-hidden="true"></div>
         <p class="label">04 / STORY</p>
         <h2 class="h2 big">A keyboard is a mood.</h2>
         <div class="story-text">
@@ -194,6 +204,7 @@
 
       <!-- CTA -->
       <section class="section cta" id="contact">
+        <div class="cta-3d" id="cta-3d" aria-hidden="true"></div>
         <p class="label">05 / CONTACT</p>
         <h2 class="h2 big">Get early access.</h2>
         <p class="cta-sub">Join the waitlist for the first batch.</p>
@@ -207,6 +218,14 @@
 
     <footer class="footer">
       <p class="label">&copy; KEYBO. EVERY MODE. ONE BOARD.</p>
+      <p class="label shortcuts">
+  HOLD <kbd>OPTION / ALT</kbd> +
+  <span><kbd>M</kbd> modes</span>
+  <span><kbd>I</kbd> inside</span>
+  <span><kbd>P</kbd> products</span>
+  <span><kbd>O</kbd> story</span>
+  <span><kbd>C</kbd> contact</span>
+</p>
     </footer>
 
     <script type="module" src="/src/main.js"></script>

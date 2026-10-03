@@ -186,5 +186,21 @@ export function createKeyboard(world) {
       if (!k) return
       gsap.to(k.cap.position, { y: 1.35, duration: 0.25, ease: 'back.out(4)', overwrite: true }) // springs back up
     },
+        // Intro: keys wait out of sight, then fall onto the board one by one
+    hideForIntro() {
+      keys.forEach(({ cap, sw }) => { cap.visible = false; sw.visible = false })
+    },
+    dropIn(audio) {
+      let i = 0
+      keys.forEach(({ cap, sw, x, z }) => {
+        const delay = 0.1 + (x + 7.5) * 0.035 + (z + 2) * 0.06 + Math.random() * 0.12 // left to right, back to front
+        cap.visible = true
+        sw.visible = true
+        gsap.fromTo(cap.position, { y: 9 + Math.random() * 5 }, { y: 1.35, duration: 0.9, delay, ease: 'bounce.out' })
+        gsap.fromTo(cap.rotation, { x: (Math.random() - 0.5) * 1.6, z: (Math.random() - 0.5) * 1.2 }, { x: 0, z: 0, duration: 0.9, delay, ease: 'power3.out' })
+        gsap.fromTo(sw.position, { y: 6 + Math.random() * 3 }, { y: 0.86, duration: 0.7, delay, ease: 'power3.out' })
+        if (i++ % 4 === 0) gsap.delayedCall(delay + 0.45, () => audio.tick()) // a click for every 4th key
+      })
+    },
   }
 }

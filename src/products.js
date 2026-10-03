@@ -21,7 +21,7 @@ const GLOW = {
 }
 
 // A mini keyboard: a case plus a grid of keycaps. The last row has a long spacebar.
-function makeBoard({ rows, cols, color }, mobile) {
+export function makeBoard({ rows, cols, color }, mobile) {
   const group = new THREE.Group()
   const seg = mobile ? 1 : 2
 
