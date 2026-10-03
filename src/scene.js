@@ -16,11 +16,14 @@ export function createScene(canvas) {
   // Soft studio reflections (built into Three.js, no image files needed)
   const pmrem = new THREE.PMREMGenerator(renderer)
   scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture
-  scene.environmentIntensity = 0.5
+  scene.environmentIntensity = 0.3
 
   const keyLight = new THREE.DirectionalLight(0xffffff, 2)
   keyLight.position.set(5, 10, 6)
   scene.add(keyLight)
+  const rimLight = new THREE.DirectionalLight(0x9db4ff, 1.0)
+  rimLight.position.set(-6, 5, -8)
+  scene.add(rimLight)
 
   // ---------- Camera "view": scroll animations will tween these numbers ----------
   const view = { angle: 0.65, zoom: 1, lookX: 0, lookY: 2.5, lookZ: -1 }

@@ -4,6 +4,7 @@ import { SplitText } from 'gsap/SplitText'
 import Lenis from 'lenis'
 import { createScene } from './scene.js'
 import { createKeyboard } from './keyboard.js'
+import { createDust } from './dust.js'
 import { initHero } from './hero.js'
 import { initModes } from './modes.js'
 import { createSwitch, initSwitch } from './switch.js'
@@ -39,6 +40,7 @@ document.querySelectorAll('a[href^="#"]').forEach((a) => {
 const world = createScene(document.querySelector('#webgl'))
 const keyboard = createKeyboard(world)
 world.fit(keyboard.width)
+const dust = createDust(world)
 keyboard.hideForIntro() // keys wait out of sight until reveal()
 initHero(world, keyboard)
 initModes(world, keyboard)
@@ -119,6 +121,7 @@ function setMode(name) {
   keyboard.setAccent(mode.color)
   keyboard.setMode(name)
   sw.setAccent(mode.color)
+  dust.setAccent(mode.color)
   story.run((s) => s.setAccent(mode.color))
   cta.run((c) => c.setAccent(mode.color))
   audio.unlock()

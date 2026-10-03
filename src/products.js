@@ -1,3 +1,4 @@
+import { createLegends } from './legends.js'
 import * as THREE from 'three'
 import gsap from 'gsap'
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js'
@@ -20,12 +21,17 @@ const GLOW = {
   compact: (k, t, h) => 0.14 + Math.sin(t * 2 - k.x * 0.4) * 0.05 + h * 0.2,
 }
 
-// A mini keyboard: a case plus a grid of keycaps. The last row has a long spacebar.
+const ROW_TEXT = ['1234567890-=', 'QWERTYUIOP[]', "ASDFGHJKL;'", 'ZXCVBNM,./']
+const LAST_ROW = ['Ctrl', 'Cmd', 'Alt', 'KEYBO', 'Alt', 'Fn', 'Ctrl']
+
+// A mini keyboard: a case plus a grid of keycaps with printed letters. The last row has a long spacebar.
+// Also used by the CTA keyboard in cta.js.
 export function makeBoard({ rows, cols, color }, mobile) {
   const group = new THREE.Group()
   const seg = mobile ? 1 : 2
+  const legends = createLegends([...ROW_TEXT.join('').split(''), ...LAST_ROW], mobile)
 
-  const caseMat = new THREE.MeshStandardMaterial({ color: 0x1c1c1f, roughness: 0.5, metalness: 0.25 })
+  const caseMat = new THREE.MeshStandardMaterial({ color: 0x141416, roughness: 0.75, metalness: 0.12 })
   group.add(new THREE.Mesh(new RoundedBoxGeometry(cols + 0.7, 0.7, rows + 0.7, seg + 1, 0.15), caseMat))
 
   const geoCache = new Map() // one geometry per key width, reused
@@ -36,18 +42,21 @@ export function makeBoard({ rows, cols, color }, mobile) {
 
   const keys = []
   for (let r = 0; r < rows; r++) {
-    const widths = r === rows - 1 ? [1.25, 1.25, 1.25, cols - 7.5, 1.25, 1.25, 1.25] : Array(cols).fill(1)
+    const last = r === rows - 1
+    const widths = last ? [1.25, 1.25, 1.25, cols - 7.5, 1.25, 1.25, 1.25] : Array(cols).fill(1)
+    const text = ROW_TEXT[r % 4]
     let x = -cols / 2
     const z = r - (rows - 1) / 2
-    widths.forEach((w) => {
+    widths.forEach((w, c) => {
       // each key has its own material so it can glow on its own
       const mat = new THREE.MeshStandardMaterial({
-        color: 0x18181a,
-        roughness: 0.55,
+        color: 0x1a1a1d,
+        roughness: 0.88,
         emissive: new THREE.Color(color),
         emissiveIntensity: 0,
       })
       const mesh = new THREE.Mesh(capGeo(w), mat)
+      mesh.add(legends.plane(last ? LAST_ROW[c] : text[c % text.length], false, 0.213)) // printed character
       mesh.position.set(x + w / 2, 0.58, z)
       group.add(mesh)
       keys.push({ mesh, mat, x: x + w / 2 })
@@ -107,7 +116,7 @@ export function initProducts(mobile) {
 
     const scene = new THREE.Scene()
     const camera = new THREE.PerspectiveCamera(32, 1, 0.1, 100)
-    scene.add(new THREE.AmbientLight(0xffffff, 0.9))
+    scene.add(new THREE.AmbientLight(0xffffff, 0.5))
     const sun = new THREE.DirectionalLight(0xffffff, 2.2)
     sun.position.set(3, 6, 5)
     scene.add(sun)

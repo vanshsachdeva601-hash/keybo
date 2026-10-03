@@ -1,3 +1,4 @@
+import { createLegends } from './legends.js'
 import * as THREE from 'three'
 import gsap from 'gsap'
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js'
@@ -26,8 +27,7 @@ export function createSwitch(world) {
   })
   const stemMat = new THREE.MeshStandardMaterial({ color: 0xedebe6, roughness: 0.4 }) // follows the mode accent
   const springMat = new THREE.MeshStandardMaterial({ color: 0xc8cbd2, metalness: 1, roughness: 0.3 })
-  const capMat = new THREE.MeshStandardMaterial({ color: 0x18181a, roughness: 0.55 })
-
+  const capMat = new THREE.MeshStandardMaterial({ color: 0x1a1a1d, roughness: 0.88 })
   // Every part is a group sitting at its "rest" height, so scroll can move it up and down
   const parts = {}
   function add(name, y, ...meshes) {
@@ -69,8 +69,11 @@ export function createSwitch(world) {
   add('stem', 1.95, body, crossA, crossB)
 
   // Keycap
-  add('keycap', 3.0, new THREE.Mesh(new RoundedBoxGeometry(1.35, 0.75, 1.35, 3, 0.1), capMat))
-
+  const capMesh = new THREE.Mesh(new RoundedBoxGeometry(1.35, 0.75, 1.35, 3, 0.1), capMat)
+  const kLegend = createLegends(['K'], isMobile).plane('K', false, 0.378) // 0.375 is the top face of the cap
+  kLegend.scale.set(1.5, 1, 1.5) // this key is bigger than a normal one, so the letter is scaled up
+  capMesh.add(kLegend)
+  add('keycap', 3.0, capMesh)
   return {
     group,
     parts,
