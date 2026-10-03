@@ -12,7 +12,7 @@ let ctx = null
 let master = null
 let noiseBuf = null
 let profile = PROFILES.none
-let enabled = true
+let enabled = false
 
 // Browsers only allow audio after a user gesture, so we create the context lazily.
 function init() {

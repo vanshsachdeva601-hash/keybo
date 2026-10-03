@@ -30,7 +30,7 @@ export function initHero(world, keyboard) {
   tl.to('.scroll-hint', { autoAlpha: 0, duration: 0.5 }, 0)
 
   // 2) Camera pulls back, looks from lower and the keyboard turns a little
-  tl.to(world.view, { angle: 0.38, zoom: 0.7, lookY: 0.8, duration: 5 }, 1)
+  tl.to(world.view, { angle: 0.38, zoom: 0.62, lookY: 0.8, duration: 5 }, 1)
   tl.to(keyboard.root.rotation, { y: 0.45, duration: 5 }, 1)
 
   // 3) The explosion: each layer group moves up or down from its rest position
@@ -60,7 +60,7 @@ export function initHero(world, keyboard) {
     world.onTick(() => {
       keyboard.root.updateMatrixWorld(true)
       LAYERS.forEach((l, i) => {
-        p.set(keyboard.width / 2 + 0.2, l.restY, 0) // a point just right of the layer
+        p.set(keyboard.labelX[l.name], l.restY, keyboard.labelZ) // a point just right of the layer, at the middle of the board
         keyboard.layers[l.name].localToWorld(p) // local -> world (includes the explosion offset)
         p.project(world.camera) // world -> screen (-1..1)
         const x = (p.x * 0.5 + 0.5) * window.innerWidth

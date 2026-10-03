@@ -170,3 +170,104 @@ export function deskDesignTexture(mobile = false) {
   }
   return tex
 }
+// Ridges around the side of the knob (used as a bump map on a cylinder)
+export function knurlTexture() {
+  const c = document.createElement('canvas')
+  c.width = 32
+  c.height = 8
+  const g = c.getContext('2d')
+  const grad = g.createLinearGradient(0, 0, 32, 0)
+  grad.addColorStop(0, '#000')
+  grad.addColorStop(0.5, '#fff')
+  grad.addColorStop(1, '#000')
+  g.fillStyle = grad
+  g.fillRect(0, 0, 32, 8)
+  const t = new THREE.CanvasTexture(c)
+  t.wrapS = t.wrapT = THREE.RepeatWrapping
+  t.repeat.set(40, 1) // 40 ridges around the knob
+  return t
+}
+// Small seeded value-noise, used to make the contour map
+function makeNoise(seed) {
+  const N = 256
+  const perm = new Uint8Array(N * 2)
+  const vals = new Float32Array(N)
+  let s = seed
+  const rnd = () => (s = (s * 1664525 + 1013904223) >>> 0) / 4294967296
+  for (let i = 0; i < N; i++) { vals[i] = rnd(); perm[i] = i }
+  for (let i = N - 1; i > 0; i--) {
+    const j = (rnd() * (i + 1)) | 0
+    const t = perm[i]; perm[i] = perm[j]; perm[j] = t
+  }
+  for (let i = 0; i < N; i++) perm[i + N] = perm[i]
+  const fade = (t) => t * t * t * (t * (t * 6 - 15) + 10)
+  return (x, y) => {
+    const xi = Math.floor(x)
+    const yi = Math.floor(y)
+    const xf = x - xi
+    const yf = y - yi
+    const X = xi & 255
+    const Y = yi & 255
+    const a = vals[perm[perm[X] + Y]]
+    const b = vals[perm[perm[X + 1] + Y]]
+    const c = vals[perm[perm[X] + Y + 1]]
+    const d = vals[perm[perm[X + 1] + Y + 1]]
+    const u = fade(xf)
+    const v = fade(yf)
+    return a + (b - a) * u + (c - a) * v + (a - b - c + d) * u * v
+  }
+}
+
+// One big topographic map. Every keycap shows its own piece of it, so the lines run on across the whole keyboard.
+// How: build a smooth height field, then draw a thin line wherever the height crosses a whole number.
+export function topoTexture(wUnits, dUnits, mobile = false) {
+  const W = mobile ? 1024 : 1792
+  const H = Math.round((W * dUnits) / wUnits)
+  const noise = makeNoise(7)
+  const F = new Float32Array(W * H)
+  const base = 1 / 3.4 // hills are about 3.4 key units wide
+  for (let y = 0; y < H; y++) {
+    const v = (y / H) * dUnits * base
+    for (let x = 0; x < W; x++) {
+      const u = (x / W) * wUnits * base
+      F[y * W + x] =
+        noise(u + 11.3, v + 4.7) * 0.55 +
+        noise(u * 2 + 3.1, v * 2 + 9.2) * 0.27 +
+        noise(u * 4 + 7.7, v * 4 + 1.3) * 0.13 +
+        noise(u * 8 + 2.2, v * 8 + 5.9) * 0.05
+    }
+  }
+
+  const LEVELS = 24 // number of contour levels
+  const half = mobile ? 1.0 : 1.1 // half of the line width, in pixels
+  const c = document.createElement('canvas')
+  c.width = W
+  c.height = H
+  const ctx = c.getContext('2d')
+  const img = ctx.createImageData(W, H)
+  const data = img.data
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      const i = y * W + x
+      const xl = x > 0 ? F[i - 1] : F[i]
+      const xr = x < W - 1 ? F[i + 1] : F[i]
+      const yu = y > 0 ? F[i - W] : F[i]
+      const yd = y < H - 1 ? F[i + W] : F[i]
+      const gx = (xr - xl) * 0.5 * LEVELS
+      const gy = (yd - yu) * 0.5 * LEVELS
+      const gm = Math.sqrt(gx * gx + gy * gy) // how fast the level changes per pixel
+      const t = F[i] * LEVELS
+      const dist = Math.abs(t - Math.round(t)) // distance to the nearest contour, in levels
+      const a = Math.max(0, Math.min(1, half + 0.5 - dist / Math.max(gm, 1e-4))) // converted to pixels = constant line width
+      const o = i * 4
+      data[o] = data[o + 1] = data[o + 2] = 255
+      data[o + 3] = Math.round(a * 255)
+    }
+  }
+  ctx.putImageData(img, 0, 0)
+
+  const tex = new THREE.CanvasTexture(c)
+  tex.colorSpace = THREE.SRGBColorSpace
+  tex.anisotropy = 8
+  return tex
+}

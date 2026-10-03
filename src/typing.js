@@ -11,7 +11,7 @@ export function initTyping (keyboard, audio, isActive) {
   window.addEventListener('keydown', (e) => {
     if (!isActive() || isField(e.target) || e.metaKey || e.ctrlKey || e.altKey) return
     audio.unlock()
-    if (e.code === 'Space') e.preventDefault() // stop Space from scrolling the page
+    if (e.code === 'Space' || e.code.startsWith('Arrow')) e.preventDefault() // stop Space and arrows from scrolling the page
     if (e.repeat) return // ignore auto-repeat while a key is held
     down.add(e.code)
     keyboard.press(e.code)
@@ -33,7 +33,7 @@ export function initTyping (keyboard, audio, isActive) {
   })
 
   // Sound on/off button
-  let on = true
+  let on = false
   toggle.addEventListener('click', () => {
     on = !on
     audio.setEnabled(on)

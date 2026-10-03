@@ -77,3 +77,65 @@ export function createLegends(labels, mobile = false) {
     },
   }
 }
+// Small legends printed on the FRONT face of a keycap (like the real keyboard).
+// Same idea as createLegends: one atlas canvas, and every key gets a plane that shows its own cell.
+export function createFrontLegends(labels, mobile = false) {
+  const FCOLS = 10
+  const FCELL = mobile ? 64 : 128
+  const FSIZE = 0.6 // plane size in key units
+  const uniq = [...new Set(labels.filter(Boolean))]
+  const index = new Map(uniq.map((l, i) => [l, i]))
+  const rows = Math.ceil(uniq.length / FCOLS)
+
+  const canvas = document.createElement('canvas')
+  canvas.width = FCELL * FCOLS
+  canvas.height = FCELL * rows
+  const ctx = canvas.getContext('2d')
+  const tex = new THREE.CanvasTexture(canvas)
+  tex.colorSpace = THREE.SRGBColorSpace
+  tex.anisotropy = 8
+
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height)
+    ctx.fillStyle = '#ffffff' // the material colour is applied later
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'middle'
+    uniq.forEach((label, i) => {
+      const n = label.length
+      const size = FCELL * (n === 1 ? 0.34 : n <= 3 ? 0.26 : 0.2) // single characters bigger, words smaller
+      ctx.font = `600 ${size}px Inter, "Helvetica Neue", Arial, sans-serif`
+      ctx.fillText(label, (i % FCOLS) * FCELL + FCELL / 2, Math.floor(i / FCOLS) * FCELL + FCELL / 2)
+    })
+    tex.needsUpdate = true
+  }
+  draw()
+  if (document.fonts) document.fonts.load('600 40px Inter').then(draw, draw)
+
+  const baseMat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false })
+
+  const geos = new Map()
+  function geoFor(label) {
+    if (!geos.has(label)) {
+      const i = index.get(label)
+      const col = i % FCOLS
+      const row = Math.floor(i / FCOLS)
+      const g = new THREE.PlaneGeometry(FSIZE, FSIZE) // stays vertical, facing the camera
+      const uv = g.attributes.uv
+      for (let j = 0; j < uv.count; j++) {
+        uv.setXY(j, (col + uv.getX(j)) / FCOLS, 1 - (row + 1) / rows + uv.getY(j) / rows)
+      }
+      geos.set(label, g)
+    }
+    return geos.get(label)
+  }
+
+  return {
+    // every key gets its own material, so its legend can glow on its own
+    plane(label) {
+      if (!index.has(label)) return new THREE.Object3D()
+      const m = new THREE.Mesh(geoFor(label), baseMat.clone())
+      m.renderOrder = 2
+      return m
+    },
+  }
+}
