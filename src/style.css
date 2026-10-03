@@ -368,3 +368,20 @@ html.lenis body { height: auto; }
   width: 100%;
   height: 100%;
 }
+/* ---------- Custom keycap cursor ---------- */
+.cursor {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+  background: #fff;
+  mix-blend-mode: difference; /* inverts whatever is behind it, so it is always visible */
+  pointer-events: none;
+  z-index: 100;
+}
+html.has-cursor,
+html.has-cursor * { cursor: none !important; }
+
+.nav-cta { display: inline-block; } /* needed so the magnetic effect can move it */

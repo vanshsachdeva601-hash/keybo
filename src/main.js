@@ -8,6 +8,8 @@ import { initHero } from './hero.js'
 import { initModes } from './modes.js'
 import { createSwitch, initSwitch } from './switch.js'
 import { initProducts } from './products.js'
+import { initMotion } from './motion.js'
+import { initCursor, initMagnetic } from './cursor.js'
 import { audio } from './audio.js'
 import { initTyping } from './typing.js'
 
@@ -39,6 +41,12 @@ initModes(world, keyboard)
 const sw = createSwitch(world)
 initSwitch(world, sw)
 initProducts(world.isMobile)
+
+// ---------- Motion layer ----------
+initMotion()
+initCursor()
+initMagnetic()
+window.addEventListener('load', () => ScrollTrigger.refresh()) // recalculate positions once everything has loaded
 
 // Typing only reacts while the keyboard is on screen
 let kbActive = true
@@ -84,10 +92,10 @@ function setMode(name) {
   modeLine.textContent = mode.line
   keyboard.setAccent(mode.color)
   keyboard.setMode(name)
-  sw.setAccent(mode.color) // the switch stem takes the mode color too
+  sw.setAccent(mode.color)
   audio.unlock()
   audio.setProfile(name)
-  audio.tick() // a click so you hear the new mode right away
+  audio.tick()
   buttons.forEach((btn) => {
     const active = btn.dataset.mode === name
     btn.classList.toggle('is-active', active)
@@ -105,5 +113,10 @@ form.addEventListener('submit', (e) => {
   const email = form.elements.email.value.trim()
   const valid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
   formMsg.textContent = valid ? "You're on the list." : 'Enter a valid email.'
-  if (valid) form.reset()
+  gsap.fromTo(formMsg, { y: 10, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: 0.5, ease: 'power3.out' })
+  if (valid) {
+    form.reset()
+    audio.unlock()
+    audio.tick() // a key click as the "success" sound
+  }
 })
