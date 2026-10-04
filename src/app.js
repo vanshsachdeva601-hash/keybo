@@ -4,6 +4,7 @@ import { SplitText } from 'gsap/SplitText'
 import Lenis from 'lenis'
 import { createScene } from './scene.js'
 import { createKeyboard } from './keyboard.js'
+import { initHeroBg } from './herobg.js'
 import { createDust } from './dust.js'
 import { initHero } from './hero.js'
 import { initModes } from './modes.js'
@@ -49,6 +50,7 @@ document.querySelectorAll('a[href^="#"]').forEach((a) => {
 
 // ---------- 3D world ----------
 const world = createScene(document.querySelector('#webgl'))
+const heroBg = initHeroBg({ isMobile: world.isMobile })
 const keyboard = createKeyboard(world)
 world.fit(keyboard.width)
 const dust = createDust(world)
@@ -134,6 +136,7 @@ function setMode(name) {
   modeLine.textContent = mode.line
   keyboard.setAccent(mode.color)
   keyboard.setMode(name)
+  heroBg.setColor(mode.color)
   sw.setAccent(mode.color)
   dust.setAccent(mode.color)
   story.run((s) => s.setAccent(mode.color))
@@ -200,4 +203,5 @@ export function reveal(intro) {
   if (document.fonts) document.fonts.ready.then(alignWordmark)
   gsap.from('.hero-copy .label, .tagline', { y: 24, autoAlpha: 0, duration: 0.8, ease: 'power3.out', stagger: 0.15, delay: 1.4 })
   gsap.from('.nav', { yPercent: -100, duration: 0.9, ease: 'power3.out', delay: 1.2 })
+  gsap.delayedCall(0.9, () => heroBg.show()) // the hero background fades in as the intro lifts
 }

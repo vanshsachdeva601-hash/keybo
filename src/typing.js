@@ -15,6 +15,7 @@ export function initTyping (keyboard, audio, isActive) {
     if (e.repeat) return // ignore auto-repeat while a key is held
     down.add(e.code)
     keyboard.press(e.code)
+    window.dispatchEvent(new Event('keybo:press'))
     audio.tick()
 
     if (e.key.length === 1) text = (text + e.key).slice(-28)
