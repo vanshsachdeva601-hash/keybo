@@ -18,6 +18,17 @@ import { audio } from './audio.js'
 import { initTyping } from './typing.js'
 
 gsap.registerPlugin(ScrollTrigger, SplitText)
+// Lines the contour pattern up from letter to letter, so it runs on across the whole word
+function alignWordmark() {
+  const wm = document.querySelector('.wordmark')
+  if (!wm) return
+  const wr = wm.getBoundingClientRect()
+  wm.querySelectorAll('.wm-char').forEach((c) => {
+    const r = c.getBoundingClientRect()
+    c.style.backgroundSize = `${wr.width}px 100%`
+    c.style.backgroundPosition = `${wr.left - r.left}px 0px`
+  })
+}
 
 // ---------- Smooth scroll, synced with GSAP ----------
 const lenis = new Lenis()
@@ -52,19 +63,22 @@ initSwitch(world, sw)
 function lazy(selector, margin, build) {
   const el = document.querySelector(selector)
   let api = null
+  let built = false
   const queue = [] // calls that arrive before the scene exists (e.g. a mode change) wait here
-  const io = new IntersectionObserver(([e]) => {
-    if (!e.isIntersecting) return
+  const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) ensure() }, { rootMargin: margin })
+  io.observe(el)
+  function ensure() {
+    if (built) return
+    built = true
     io.disconnect()
     api = build()
     queue.forEach((fn) => fn(api))
     ScrollTrigger.refresh()
-  }, { rootMargin: margin })
-  io.observe(el)
-  return { run: (fn) => (api ? fn(api) : queue.push(fn)) }
+  }
+  return { run: (fn) => (api ? fn(api) : queue.push(fn)), ensure }
 }
 
-lazy('#products', '600px', () => initProducts(world.isMobile))
+const products = lazy('#products', '600px', () => initProducts(world.isMobile))
 const story = lazy('#story', '800px', () => initStory(world.isMobile))
 const cta = lazy('#contact', '800px', () => initCta(world.isMobile))
 
@@ -160,18 +174,30 @@ export function reveal(intro) {
   tl.to('.intro-inner', { autoAlpha: 0, y: -30, duration: 0.5, ease: 'power2.in' })
     .to(intro, { yPercent: -100, duration: 1.1, ease: 'power4.inOut' }, 0.35)
     .add(() => keyboard.dropIn(audio), 0.55)
-    .add(() => {
+        .add(() => {
       intro.remove()
       lenis.start()
       introDone = true
       ScrollTrigger.refresh()
+
+      // Build the heavy scenes while the page is idle, one by one, instead of in the middle of a scroll
+      const idle = (fn) => ('requestIdleCallback' in window ? requestIdleCallback(fn, { timeout: 4000 }) : setTimeout(fn, 600))
+      setTimeout(() => idle(() => products.ensure()), 1800)
+      setTimeout(() => idle(() => story.ensure()), 3800)
+      setTimeout(() => idle(() => cta.ensure()), 5800)
     }, 1.6)
 
-  SplitText.create('.wordmark', {
+    SplitText.create('.wordmark', {
     type: 'chars',
     mask: 'chars',
-    onSplit: (self) => gsap.from(self.chars, { yPercent: 110, duration: 1, ease: 'power4.out', stagger: 0.06, delay: 0.9 }),
+    charsClass: 'wm-char', // so the letters can get the contour fill from the CSS
+    onSplit: (self) => {
+      alignWordmark()
+      return gsap.from(self.chars, { yPercent: 110, duration: 1, ease: 'power4.out', stagger: 0.06, delay: 0.9 })
+    },
   })
+  window.addEventListener('resize', alignWordmark)
+  if (document.fonts) document.fonts.ready.then(alignWordmark)
   gsap.from('.hero-copy .label, .tagline', { y: 24, autoAlpha: 0, duration: 0.8, ease: 'power3.out', stagger: 0.15, delay: 1.4 })
   gsap.from('.nav', { yPercent: -100, duration: 0.9, ease: 'power3.out', delay: 1.2 })
 }

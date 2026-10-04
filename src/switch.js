@@ -118,7 +118,7 @@ export function initSwitch(world, sw) {
   // ---------- 1) Travel: the camera dives from the keyboard down to the switch ----------
   gsap
     .timeline({
-      scrollTrigger: { trigger: '#switch', start: 'top bottom', end: 'top top', scrub: 1, invalidateOnRefresh: true },
+      scrollTrigger: { trigger: '#switch', start: 'top bottom', end: 'top top', scrub: true, invalidateOnRefresh: true },
     })
     .fromTo(
       world.view,
@@ -129,7 +129,7 @@ export function initSwitch(world, sw) {
   // ---------- 2) Pinned scene: take apart, explain, put back, press ----------
   const tl = gsap.timeline({
     defaults: { ease: 'power2.inOut' },
-    scrollTrigger: { trigger: '#switch', start: 'top top', end: 'bottom bottom', scrub: 1, invalidateOnRefresh: true },
+    scrollTrigger: { trigger: '#switch', start: 'top top', end: 'bottom bottom', scrub: true, invalidateOnRefresh: true },
   })
 
   // fromTo with explicit values keeps every tween correct even if you scroll fast or jump
@@ -154,7 +154,7 @@ export function initSwitch(world, sw) {
   // Text blocks: five parts, then the final "press" block
   const items = gsap.utils.toArray('.part')
   items.forEach((el, i) => {
-    const at = i < 5 ? 3.4 + i * 1.2 : 11
+    const at = i < 5 ? 3.4 + i * 1.2 : 9.9
     tl.fromTo(el, { autoAlpha: 0, y: 24 }, { autoAlpha: 1, y: 0, duration: 0.5, ease: 'power2.out', immediateRender: false }, at)
     if (i < 5) tl.to(el, { autoAlpha: 0, y: -24, duration: 0.4, ease: 'power2.in' }, at + 1)
   })

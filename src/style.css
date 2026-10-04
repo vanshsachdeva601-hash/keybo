@@ -512,3 +512,46 @@ body::after { /* film grain */
   opacity: 0.05;
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .6 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
 }
+/* ---------- KEYBO wordmark: contour pattern inside the letters, and it follows the mode colour ---------- */
+:root {
+  --wm-lines: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 420' preserveAspectRatio='none' fill='none' stroke='black' stroke-opacity='.2' stroke-width='2.2'><path d='M-20 60 C 140 10, 260 120, 420 70 S 700 -10, 860 60 S 1080 120, 1220 50'/><path d='M-20 120 C 150 70, 280 180, 440 130 S 720 50, 880 120 S 1090 180, 1220 110'/><path d='M-20 180 C 160 130, 300 240, 460 190 S 740 110, 900 180 S 1100 240, 1220 170'/><path d='M-20 240 C 170 190, 320 300, 480 250 S 760 170, 920 240 S 1110 300, 1220 230'/><path d='M-20 300 C 180 250, 340 360, 500 310 S 780 230, 940 300 S 1120 360, 1220 290'/><path d='M-20 360 C 190 310, 360 420, 520 370 S 800 290, 960 360 S 1130 420, 1220 350'/><ellipse cx='820' cy='215' rx='150' ry='70'/><ellipse cx='820' cy='215' rx='95' ry='42'/><ellipse cx='820' cy='215' rx='45' ry='20'/><ellipse cx='260' cy='260' rx='110' ry='55'/><ellipse cx='260' cy='260' rx='55' ry='26'/></svg>");
+}
+
+/* Each letter of the hero KEYBO (app.js splits the word into .wm-char). JS lines the pattern up from letter to letter. */
+/* Each letter of the hero KEYBO. Every layer is word-wide (JS sets size and position), so they run on from letter to letter. */
+.wm-char {
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  background-image:
+    var(--wm-lines),
+    linear-gradient(105deg, transparent 36%, rgba(255, 255, 255, 0.3) 48%, transparent 60%),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--accent) 22%, #ffffff) 0%,
+      var(--accent) 46%,
+      color-mix(in srgb, var(--accent) 52%, #0b0b0c) 100%
+    );
+  background-repeat: no-repeat;
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+/* The KEYBO on the intro screen gets the same fill */
+.intro-title {
+  position: relative;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  background-image:
+    var(--wm-lines),
+    linear-gradient(105deg, transparent 36%, rgba(255, 255, 255, 0.3) 48%, transparent 60%),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--accent) 22%, #ffffff) 0%,
+      var(--accent) 46%,
+      color-mix(in srgb, var(--accent) 52%, #0b0b0c) 100%
+    );
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  -webkit-background-clip: text;
+  background-clip: text;
+}

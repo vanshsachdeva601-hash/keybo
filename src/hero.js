@@ -21,7 +21,7 @@ export function initHero(world, keyboard) {
       trigger: '#stage',
       start: 'top top',
       end: 'bottom bottom',
-      scrub: 1, // 1 second of smoothing so it feels fluid
+      scrub: true, // 1 second of smoothing so it feels fluid
     },
   })
 

@@ -6,7 +6,7 @@ import { LAYERS } from './hero.js'
 export function initModes(world, keyboard) {
   const tl = gsap.timeline({
     defaults: { ease: 'power2.inOut' },
-    scrollTrigger: { trigger: '#modes', start: 'top bottom', end: 'top 25%', scrub: 1 },
+    scrollTrigger: { trigger: '#modes', start: 'top bottom', end: 'top 25%', scrub: true },
   })
 
   // fromTo with explicit start values = where the hero timeline ended
