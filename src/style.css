@@ -112,13 +112,6 @@ a { color: inherit; text-decoration: none; }
   pointer-events: none;
 }
 .hero-copy .label { color: var(--accent); }
-.wordmark {
-  font-family: var(--font-head);
-  font-weight: 700;
-  font-size: clamp(4rem, 18vw, 12rem);
-  letter-spacing: -0.04em;
-  line-height: 0.9;
-}
 .tagline {
   font-family: var(--font-head);
   font-weight: 500;
@@ -514,44 +507,65 @@ body::after { /* film grain */
 }
 /* ---------- KEYBO wordmark: contour pattern inside the letters, and it follows the mode colour ---------- */
 :root {
-  --wm-lines: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 420' preserveAspectRatio='none' fill='none' stroke='black' stroke-opacity='.2' stroke-width='2.2'><path d='M-20 60 C 140 10, 260 120, 420 70 S 700 -10, 860 60 S 1080 120, 1220 50'/><path d='M-20 120 C 150 70, 280 180, 440 130 S 720 50, 880 120 S 1090 180, 1220 110'/><path d='M-20 180 C 160 130, 300 240, 460 190 S 740 110, 900 180 S 1100 240, 1220 170'/><path d='M-20 240 C 170 190, 320 300, 480 250 S 760 170, 920 240 S 1110 300, 1220 230'/><path d='M-20 300 C 180 250, 340 360, 500 310 S 780 230, 940 300 S 1120 360, 1220 290'/><path d='M-20 360 C 190 310, 360 420, 520 370 S 800 290, 960 360 S 1130 420, 1220 350'/><ellipse cx='820' cy='215' rx='150' ry='70'/><ellipse cx='820' cy='215' rx='95' ry='42'/><ellipse cx='820' cy='215' rx='45' ry='20'/><ellipse cx='260' cy='260' rx='110' ry='55'/><ellipse cx='260' cy='260' rx='55' ry='26'/></svg>");
+  --wm-lines: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 420' preserveAspectRatio='none' fill='none' stroke='black' stroke-opacity='.2' stroke-width='1.6' stroke-linecap='round'><path d='M-20 10 C 140 -40, 260 70, 420 20 S 700 -60, 860 10 S 1080 70, 1220 0'/><path d='M-20 42 C 150 -8, 270 102, 430 52 S 710 -28, 870 42 S 1090 102, 1220 32'/><path d='M-20 74 C 130 24, 250 134, 410 84 S 690 4, 850 74 S 1070 134, 1220 64'/><path d='M-20 106 C 140 56, 260 166, 420 116 S 700 36, 860 106 S 1080 166, 1220 96'/><path d='M-20 138 C 160 88, 280 198, 440 148 S 720 68, 880 138 S 1100 198, 1220 128'/><path d='M-20 170 C 140 120, 260 230, 420 180 S 700 100, 860 170 S 1080 230, 1220 160'/><path d='M-20 202 C 150 152, 270 262, 430 212 S 710 132, 870 202 S 1090 262, 1220 192'/><path d='M-20 234 C 130 184, 250 294, 410 244 S 690 164, 850 234 S 1070 294, 1220 224'/><path d='M-20 266 C 140 216, 260 326, 420 276 S 700 196, 860 266 S 1080 326, 1220 256'/><path d='M-20 298 C 160 248, 280 358, 440 308 S 720 228, 880 298 S 1100 358, 1220 288'/><path d='M-20 330 C 140 280, 260 390, 420 340 S 700 260, 860 330 S 1080 390, 1220 320'/><path d='M-20 362 C 150 312, 270 422, 430 372 S 710 292, 870 362 S 1090 422, 1220 352'/><path d='M-20 394 C 130 344, 250 454, 410 404 S 690 324, 850 394 S 1070 454, 1220 384'/><ellipse cx='820' cy='215' rx='190' ry='88'/><ellipse cx='820' cy='215' rx='150' ry='68'/><ellipse cx='820' cy='215' rx='110' ry='49'/><ellipse cx='820' cy='215' rx='70' ry='30'/><ellipse cx='820' cy='215' rx='34' ry='14'/><ellipse cx='260' cy='250' rx='150' ry='72'/><ellipse cx='260' cy='250' rx='105' ry='48'/><ellipse cx='260' cy='250' rx='62' ry='27'/><ellipse cx='260' cy='250' rx='26' ry='10'/><ellipse cx='1060' cy='95' rx='110' ry='52'/><ellipse cx='1060' cy='95' rx='70' ry='31'/><ellipse cx='1060' cy='95' rx='34' ry='14'/></svg>");
 }
 
 /* Each letter of the hero KEYBO (app.js splits the word into .wm-char). JS lines the pattern up from letter to letter. */
 /* Each letter of the hero KEYBO. Every layer is word-wide (JS sets size and position), so they run on from letter to letter. */
+/* Each letter of the hero KEYBO: one solid colour (the mode colour). A very faint contour print runs across the word. */
 .wm-char {
   color: transparent;
   -webkit-text-fill-color: transparent;
-  background-image:
-    var(--wm-lines),
-    linear-gradient(105deg, transparent 36%, rgba(255, 255, 255, 0.3) 48%, transparent 60%),
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--accent) 22%, #ffffff) 0%,
-      var(--accent) 46%,
-      color-mix(in srgb, var(--accent) 52%, #0b0b0c) 100%
-    );
-  background-repeat: no-repeat;
+  background-image: var(--wm-lines);
+  background-color: var(--accent);  background-repeat: no-repeat;
   -webkit-background-clip: text;
   background-clip: text;
 }
 
 /* The KEYBO on the intro screen gets the same fill */
+/* The KEYBO on the intro screen gets the same fill */
 .intro-title {
   position: relative;
   color: transparent;
   -webkit-text-fill-color: transparent;
-  background-image:
-    var(--wm-lines),
-    linear-gradient(105deg, transparent 36%, rgba(255, 255, 255, 0.3) 48%, transparent 60%),
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--accent) 22%, #ffffff) 0%,
-      var(--accent) 46%,
-      color-mix(in srgb, var(--accent) 52%, #0b0b0c) 100%
-    );
-  background-size: 100% 100%;
+  background-image: var(--wm-lines);
+  background-color: var(--accent);  background-size: 100% 100%;
   background-repeat: no-repeat;
   -webkit-background-clip: text;
   background-clip: text;
+}
+
+/* ---------- Waitlist button: glows on hover, in the mode colour ---------- */
+.form button {
+  transition: box-shadow 0.35s ease, filter 0.35s ease; /* not transform: the magnetic effect moves it with GSAP */
+}
+.form button:hover,
+.form button:focus-visible {
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--accent) 70%, #ffffff),
+    0 0 16px color-mix(in srgb, var(--accent) 70%, transparent),
+    0 0 44px color-mix(in srgb, var(--accent) 45%, transparent),
+    0 0 90px color-mix(in srgb, var(--accent) 28%, transparent);
+  filter: brightness(1.06);
+}
+/* The hero KEYBO: size and type. */
+.wordmark {
+  font-family: var(--font-head);
+  font-weight: 700;
+  font-size: clamp(4rem, 18vw, 12rem);
+  letter-spacing: -0.04em;
+  line-height: 0.9;
+  filter: none;
+}
+.intro-title { filter: none; }
+/* KEYBO before any mode is chosen: a bright white. Once a mode is picked, it follows the mode colour again. */
+html:not([data-mode]) .wm-char,
+html:not([data-mode]) .intro-title {
+  background-color: #eef0f5;
+}
+
+/* a soft change of colour when a mode is picked */
+.wm-char,
+.intro-title {
+  transition: background-color 0.35s ease;
 }

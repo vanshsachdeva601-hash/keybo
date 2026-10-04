@@ -26,7 +26,7 @@ export function createScene(canvas) {
   scene.add(rimLight)
 
   // ---------- Camera "view": scroll animations will tween these numbers ----------
-  const view = { angle: 0.65, zoom: 1, lookX: 0, lookY: 2.5, lookZ: -1 }
+  const view = { angle: 0.65, zoom: 0.92, lookX: 0, lookY: 3.1, lookZ: -1 }
   let fitWidth = 16 // how wide the object is, so we can always fit it on screen
 
     // How far the camera sits when zoom = 1. Other files use this to frame things.
