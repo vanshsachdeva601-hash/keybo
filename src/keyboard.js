@@ -66,8 +66,8 @@ const POCKET = [[-0.1, -0.56], [14.75, -0.56], [14.75, 0.78], [16.1, 0.78], [16.
 const MAT_W = 24
 const MAT_H = ((MAT_W - 0.4) * 972) / 2048 + 0.3 // the printed design has a 2048 x 972 ratio
 
-const DEFAULT_LED = 0x3da5ff // colour before any mode is chosen: the sky blue
-const MODE_COLOR = { type: 0xffb020, work: 0xc7ccd6, compact: 0x7cffb2 } // Play is a rainbow, see the tick below
+export const DEFAULT_LED = 0x9aa1ad // colour before any mode is chosen: the sky blue
+export const MODE_COLOR = { type: 0xffb020, work: 0x3da5ff, compact: 0x7cffb2 } // Play is a rainbow, see the tick below
 const LINE_BASE = new THREE.Color(0x8a94a3) // colour of the contour lines
 const WHITE = new THREE.Color(0xffffff)
 

@@ -2,7 +2,7 @@
 @property --accent {
   syntax: "<color>";
   inherits: true;
-  initial-value: #3da5ff;
+  initial-value: #9aa1ad;
 }
 
 /* ---------- Design tokens ---------- */
@@ -12,7 +12,7 @@
   --border: #26262a;
   --text: #edebe6;
   --muted: #8a8a90;
-  --accent: #3da5ff;
+  --accent: #9aa1ad;
 
   --font-head: "Space Grotesk", system-ui, sans-serif;
   --font-body: "Inter", system-ui, sans-serif;
@@ -359,7 +359,7 @@ html.lenis body { height: auto; }
 /* ---------- Product 3D models ---------- */
 .card-3d {
   position: relative;
-  height: clamp(11rem, 24vw, 17rem);
+  height: clamp(13rem, 28vw, 21rem);
   margin: -0.25rem -0.5rem 0.25rem;
   cursor: pointer;
 }

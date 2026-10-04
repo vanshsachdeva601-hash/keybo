@@ -1,100 +1,54 @@
-import { createLegends } from './legends.js'
 import * as THREE from 'three'
 import gsap from 'gsap'
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js'
+import { createBoard, fitCamera, LINE_BASE } from './board.js'
+import { MODE_COLOR } from './keyboard.js'
 
-const CFG = {
-  play: { rows: 5, cols: 14, color: 0xff2e4d },
-  type: { rows: 5, cols: 12, color: 0xffb020 },
-  work: { rows: 5, cols: 14, color: 0x3da5ff },
-  compact: { rows: 4, cols: 10, color: 0x7cffb2 },
+const REST_X = 0.75 // how far the board is tipped toward the camera
+const REST_Y = -0.45 // and turned a little
+
+// One board per card: its layout, and what extras it gets
+const CARDS = {
+  play: { layout: 'full75' }, // gaming: 75% with the knob
+  type: { layout: 'n65' }, // typing: 65%
+  work: { layout: 'full75', devices: true }, // office: 75% with three paired devices behind it
+  compact: { layout: 'n60', rings: true }, // travel: 60% with wireless rings
 }
 
-// How bright each key glows, per product. Called every frame for every key.
-const GLOW = {
-  play: (k, t, h) => {
-    k.mat.emissive.setHSL((k.x * 0.05 + t * 0.35) % 1, 1, 0.5) // hue moves along x and over time = wave
-    return 0.5 + h * 0.3
-  },
-  type: (k, t, h) => 0.14 + Math.sin(t * 1.6 + k.x * 0.15) * 0.05 + h * 0.2, // slow breathing
-  work: (k, t, h) => 0.1 + h * 0.25, // steady
-  compact: (k, t, h) => 0.14 + Math.sin(t * 2 - k.x * 0.4) * 0.05 + h * 0.2,
-}
-
-const ROW_TEXT = ['1234567890-=', 'QWERTYUIOP[]', "ASDFGHJKL;'", 'ZXCVBNM,./']
-const LAST_ROW = ['Ctrl', 'Cmd', 'Alt', 'KEYBO', 'Alt', 'Fn', 'Ctrl']
-
-// A mini keyboard: a case plus a grid of keycaps with printed letters. The last row has a long spacebar.
-// Also used by the CTA keyboard in cta.js.
-export function makeBoard({ rows, cols, color }, mobile) {
-  const group = new THREE.Group()
-  const seg = mobile ? 1 : 2
-  const legends = createLegends([...ROW_TEXT.join('').split(''), ...LAST_ROW], mobile)
-
-  const caseMat = new THREE.MeshStandardMaterial({ color: 0x141416, roughness: 0.75, metalness: 0.12 })
-  group.add(new THREE.Mesh(new RoundedBoxGeometry(cols + 0.7, 0.7, rows + 0.7, seg + 1, 0.15), caseMat))
-
-  const geoCache = new Map() // one geometry per key width, reused
-  const capGeo = (w) => {
-    if (!geoCache.has(w)) geoCache.set(w, new RoundedBoxGeometry(w - 0.12, 0.42, 0.88, seg, 0.07))
-    return geoCache.get(w)
-  }
-
-  const keys = []
-  for (let r = 0; r < rows; r++) {
-    const last = r === rows - 1
-    const widths = last ? [1.25, 1.25, 1.25, cols - 7.5, 1.25, 1.25, 1.25] : Array(cols).fill(1)
-    const text = ROW_TEXT[r % 4]
-    let x = -cols / 2
-    const z = r - (rows - 1) / 2
-    widths.forEach((w, c) => {
-      // each key has its own material so it can glow on its own
-      const mat = new THREE.MeshStandardMaterial({
-        color: 0x1a1a1d,
-        roughness: 0.88,
-        emissive: new THREE.Color(color),
-        emissiveIntensity: 0,
-      })
-      const mesh = new THREE.Mesh(capGeo(w), mat)
-      mesh.add(legends.plane(last ? LAST_ROW[c] : text[c % text.length], false, 0.213)) // printed character
-      mesh.position.set(x + w / 2, 0.58, z)
-      group.add(mesh)
-      keys.push({ mesh, mat, x: x + w / 2 })
-      x += w
-    })
-  }
-  return { group, keys }
+// The LED pattern of each product (same colours as the matching mode in the hero)
+const PATTERN = {
+  play: (k, t, out) => { out.color.setHSL((k.x * 0.045 + t * 0.35) % 1, 1, 0.5); out.level = 0.95 },
+  type: (k, t, out) => { out.color.set(MODE_COLOR.type); out.level = 0.8 + Math.sin(t * 1.6 + k.x * 0.15) * 0.1 },
+  work: (k, t, out) => { out.color.set(MODE_COLOR.work); out.level = 0.8 },
+  compact: (k, t, out) => { out.color.set(MODE_COLOR.compact); out.level = 0.85 + Math.sin(t * 2 - k.x * 0.4) * 0.1 },
 }
 
 // Work: three "devices" standing behind the keyboard (the 3-device pairing idea)
-function addDevices(group, rows) {
+function addDevices(board) {
   const mats = []
-  const xs = [-4.2, 0, 4.2]
-  xs.forEach((x) => {
+  const dw = board.width * 0.26
+  ;[-0.33, 0, 0.33].forEach((f) => {
     const mat = new THREE.MeshStandardMaterial({
-      color: 0x26262a,
-      roughness: 0.4,
-      emissive: new THREE.Color(0x3da5ff),
-      emissiveIntensity: 0,
+      color: 0x1b1b1f, roughness: 0.5, emissive: new THREE.Color(MODE_COLOR.work), emissiveIntensity: 0,
     })
-    const dev = new THREE.Mesh(new RoundedBoxGeometry(3, 2, 0.15, 2, 0.05), mat)
-    dev.position.set(x, 1.3, -rows / 2 - 1.6)
-    dev.rotation.x = -0.25
-    group.add(dev)
+    const dev = new THREE.Mesh(new RoundedBoxGeometry(dw, 2.6, 0.16, 2, 0.05), mat)
+    dev.position.set(f * board.width, 2.0, -board.depth / 2 - 1.9)
+    dev.rotation.x = -0.2
+    board.group.add(dev)
     mats.push(mat)
   })
   return mats
 }
 
 // Compact: three flat rings that expand outward like a wireless signal
-function addRings(group) {
+function addRings(board) {
   const rings = []
   for (let i = 0; i < 3; i++) {
-    const mat = new THREE.MeshBasicMaterial({ color: 0x7cffb2, transparent: true, opacity: 0 })
+    const mat = new THREE.MeshBasicMaterial({ color: MODE_COLOR.compact, transparent: true, opacity: 0 })
     const ring = new THREE.Mesh(new THREE.TorusGeometry(1, 0.035, 6, 48), mat)
     ring.rotation.x = Math.PI / 2
     ring.position.y = 1.0
-    group.add(ring)
+    board.group.add(ring)
     rings.push(ring)
   }
   return rings
@@ -105,7 +59,7 @@ export function initProducts(mobile) {
 
   document.querySelectorAll('.card-3d').forEach((el) => {
     const name = el.dataset.model
-    const cfg = CFG[name]
+    const cfg = CARDS[name]
     if (!cfg) return
     const card = el.closest('.card')
 
@@ -115,24 +69,27 @@ export function initProducts(mobile) {
     el.appendChild(renderer.domElement)
 
     const scene = new THREE.Scene()
-    const camera = new THREE.PerspectiveCamera(32, 1, 0.1, 100)
-    scene.add(new THREE.AmbientLight(0xffffff, 0.5))
+    const camera = new THREE.PerspectiveCamera(32, 1, 0.1, 200)
+    scene.add(new THREE.AmbientLight(0xffffff, 1.1))
     const sun = new THREE.DirectionalLight(0xffffff, 2.2)
-    sun.position.set(3, 6, 5)
+    sun.position.set(3, 8, 6)
     scene.add(sun)
-    const rim = new THREE.PointLight(cfg.color, 30, 30, 2) // a colored light that matches the product
-    rim.position.set(-4, 3, 4)
+    const rim = new THREE.DirectionalLight(0x9db4ff, 0.8) // cool edge light, like the hero
+    rim.position.set(-6, 4, -8)
     scene.add(rim)
 
-    const { group, keys } = makeBoard(cfg, mobile)
+    const board = createBoard({ layout: cfg.layout, mobile, merge: true, line: { px: 1.0, levels: 12, scale: 1 / 4.5 } }) // calmer, thinner lines: the keys are small here
     const pivot = new THREE.Group() // the pivot is what tilts with the cursor
-    pivot.add(group)
+    pivot.rotation.set(REST_X, REST_Y, 0)
+    pivot.add(board.group)
     scene.add(pivot)
 
-    const devices = name === 'work' ? addDevices(group, cfg.rows) : null
-    const rings = name === 'compact' ? addRings(group) : null
+    const devices = cfg.devices ? addDevices(board) : null
+    const rings = cfg.rings ? addRings(board) : null
 
-    // Same framing width for every card, so the Mini board really looks smaller
+    // Fit the camera to the board (and the devices behind it), so nothing is cut off
+    const bounds = cfg.devices ? { ...board.bounds, top: 3.6, back: board.bounds.back + 2.2 } : board.bounds
+    const restRot = new THREE.Euler(REST_X + board.tilt, REST_Y, 0)
     function resize() {
       const w = el.clientWidth
       const h = el.clientHeight
@@ -140,8 +97,7 @@ export function initProducts(mobile) {
       renderer.setSize(w, h, false)
       camera.aspect = w / h
       camera.updateProjectionMatrix()
-      const half = THREE.MathUtils.degToRad(camera.fov / 2)
-      camera.position.set(0, 0, Math.max(15.5 / 2 / (Math.tan(half) * camera.aspect), 12))
+      fitCamera(camera, restRot, bounds, 1.1)
     }
     new ResizeObserver(resize).observe(el)
     resize()
@@ -164,21 +120,29 @@ export function initProducts(mobile) {
     // Only render while the card is on screen
     new IntersectionObserver(([entry]) => { st.on = entry.isIntersecting }, { rootMargin: '100px' }).observe(el)
 
-    const glow = GLOW[name]
+    const pattern = PATTERN[name]
+    const tint = new THREE.Color()
     items.push((t) => {
       if (!st.on) return
 
       // ease toward the targets
       st.h += (st.ht - st.h) * 0.08
-      pivot.rotation.x += (0.75 + st.ty * 0.5 - pivot.rotation.x) * 0.08
-      pivot.rotation.y += (-0.45 + st.tx * 0.9 + Math.sin(t * 0.5) * 0.12 - pivot.rotation.y) * 0.08
-      pivot.scale.setScalar(1 + st.h * 0.06)
+      pivot.rotation.x += (REST_X + st.ty * 0.5 - pivot.rotation.x) * 0.08
+      pivot.rotation.y += (REST_Y + st.tx * 0.9 + Math.sin(t * 0.5) * 0.12 - pivot.rotation.y) * 0.08
+      pivot.scale.setScalar(1 + st.h * 0.05)
 
-      keys.forEach((k) => {
-        k.mat.emissiveIntensity = glow(k, t, st.h)
-        // on hover a wave of keys pops up, travelling along x
-        k.mesh.position.y = 0.58 + st.h * 0.2 * Math.max(0, Math.sin(k.x * 0.7 - t * 7))
+      // On hover, a band of light runs along the board
+      const sweep = ((t * 9) % (board.width + 8)) - 4
+      board.light((k, out) => {
+        pattern(k, t, out)
+        out.level += st.h * Math.max(0, 1 - Math.abs(k.x - sweep) / 2.4) * 0.9
       })
+
+      // the haze and the contour lines take a little of the LED colour
+      if (name === 'play') tint.setHSL((t * 0.12) % 1, 1, 0.5)
+      else tint.set(MODE_COLOR[name])
+      board.hazeMat.color.copy(tint)
+      board.lineColor.copy(LINE_BASE).lerp(tint, 0.2)
 
       if (devices) {
         const active = Math.floor(t / 1.6) % 3 // one device lights up at a time
@@ -189,7 +153,7 @@ export function initProducts(mobile) {
       if (rings) {
         rings.forEach((ring, i) => {
           const phase = (t * 0.45 + i / 3) % 1 // 0 -> 1, then starts over
-          ring.scale.setScalar(1 + phase * cfg.cols * 0.55)
+          ring.scale.setScalar(1 + phase * board.width * 0.5)
           ring.material.opacity = (1 - phase) * 0.7
         })
       }

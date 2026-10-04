@@ -26,7 +26,7 @@ export function createSwitch(world) {
     color: 0x9a9ca4, metalness: 0.1, roughness: 0.15,
     transparent: true, opacity: 0.28, depthWrite: false, // see-through top housing = cutaway look
   })
-  const stemMat = new THREE.MeshStandardMaterial({ color: 0x3da5ff, roughness: 0.4 }) // follows the mode accent  const springMat = new THREE.MeshStandardMaterial({ color: 0xc8cbd2, metalness: 1, roughness: 0.3 })
+  const stemMat = new THREE.MeshStandardMaterial({ color: 0xc7ccd6, roughness: 0.4 }) // follows the mode accent  const springMat = new THREE.MeshStandardMaterial({ color: 0xc8cbd2, metalness: 1, roughness: 0.3 })
   const springMat = new THREE.MeshStandardMaterial({ color: 0xc8cbd2, metalness: 1, roughness: 0.3 })
   // Every part is a group sitting at its "rest" height, so scroll can move it up and down
   const parts = {}
@@ -73,14 +73,14 @@ export function createSwitch(world) {
   const SC = 1.35 / 0.86 // this keycap is that much bigger than a keyboard keycap
   const capDims = { d: 0.86 * SC, h: 0.75, inset: 0.09 * SC, slope: 0.1 }
   const cap = createContourMaterial({ px: isMobile ? 2.4 : 3.4 }) // thicker lines, because the cap is bigger on screen
-  cap.lineColor.lerp(new THREE.Color(0x3da5ff), 0.2)
+  cap.lineColor.lerp(new THREE.Color(0xc7ccd6), 0.2)
   const capGeo = buildCapGeometry({
     dx: 0.86 * SC, h: capDims.h, dz: capDims.d, inset: capDims.inset, slope: capDims.slope,
     seg: isMobile ? 1 : 3, radius: 0.07 * SC, offset: new THREE.Vector3(7, 0, 2), patScale: 1 / SC, // 1 / SC keeps the density of a real keycap
   })
   const capMesh = new THREE.Mesh(capGeo, cap.material)
   const kLegend = createFrontLegends(['K'], isMobile).plane('K')
-  kLegend.material.color.set(0x3da5ff)
+  kLegend.material.color.set(0xc7ccd6)
   placeFrontLegend(kLegend, { ...capDims, scale: SC })
   capMesh.add(kLegend)
   add('keycap', 3.0, capMesh)

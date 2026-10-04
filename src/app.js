@@ -105,7 +105,7 @@ gsap.to('#webgl', {
 const MODES = {
   play: { color: '#ff2e4d', line: 'Low latency. Linear switches. Built to win.' },
   type: { color: '#ffb020', line: 'Tactile. Thocky. Built to write.' },
-  work: { color: '#c7ccd6', line: 'Quiet. Multi-device. Built to focus.' },
+  work: { color: '#3da5ff', line: 'Quiet. Multi-device. Built to focus.' },
   compact: { color: '#7cffb2', line: '75%. Wireless. Built to travel.' },
 }
 
@@ -124,6 +124,7 @@ function setMode(name) {
   dust.setAccent(mode.color)
   story.run((s) => s.setAccent(mode.color))
   cta.run((c) => c.setAccent(mode.color))
+  cta.run((c) => c.setMode(name))
   audio.unlock()
   audio.setProfile(name)
   audio.tick()

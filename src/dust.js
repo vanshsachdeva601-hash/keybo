@@ -15,7 +15,7 @@ export function createDust(world) {
   const geo = new THREE.BufferGeometry()
   geo.setAttribute('position', new THREE.BufferAttribute(pos, 3))
   const mat = new THREE.PointsMaterial({
-    color: 0x3da5ff,
+    color: 0xc7ccd6,
     size: 0.09,
     transparent: true,
     opacity: 0.55,
