@@ -58,6 +58,7 @@ export function initStory(mobile) {
     camera.updateProjectionMatrix()
   }
   new ResizeObserver(resize).observe(host)
+  renderer.compileAsync(scene, camera).then(() => renderer.render(scene, camera)).catch(() => renderer.render(scene, camera)) // warm-up: compile and upload now, while nobody is looking
   resize()
 
   let prog = 0

@@ -6,6 +6,7 @@ import { MODE_COLOR } from './keyboard.js'
 
 const REST_X = 0.75 // how far the board is tipped toward the camera
 const REST_Y = -0.45 // and turned a little
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
 
 // One board per card: its layout, and what extras it gets
 const CARDS = {
@@ -54,10 +55,16 @@ function addRings(board) {
   return rings
 }
 
+// One hidden frame, so the shaders are compiled and the buffers are on the GPU before anybody scrolls here
+async function warm(renderer, scene, camera) {
+  try { await renderer.compileAsync(scene, camera) } catch (e) { /* not supported: the first real frame compiles instead */ }
+  renderer.render(scene, camera)
+}
+
 export function initProducts(mobile) {
   const items = []
 
-  document.querySelectorAll('.card-3d').forEach((el) => {
+  async function setupCard(el) {
     const name = el.dataset.model
     const cfg = CARDS[name]
     if (!cfg) return
@@ -65,7 +72,7 @@ export function initProducts(mobile) {
 
     // Each card gets its own small renderer, scene and camera
     const renderer = new THREE.WebGLRenderer({ antialias: !mobile, alpha: true })
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, mobile ? 1.25 : 1.75))
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, mobile ? 1.25 : 1.5))
     el.appendChild(renderer.domElement)
 
     const scene = new THREE.Scene()
@@ -78,7 +85,7 @@ export function initProducts(mobile) {
     rim.position.set(-6, 4, -8)
     scene.add(rim)
 
-    const board = createBoard({ layout: cfg.layout, mobile, merge: true, line: { px: 1.0, levels: 12, scale: 1 / 4.5 } }) // calmer, thinner lines: the keys are small here
+    const board = createBoard({ layout: cfg.layout, mobile, merge: true, line: { px: 1.0, levels: 12, scale: 1 / 4.5 } })
     const pivot = new THREE.Group() // the pivot is what tilts with the cursor
     pivot.rotation.set(REST_X, REST_Y, 0)
     pivot.add(board.group)
@@ -117,8 +124,8 @@ export function initProducts(mobile) {
       st.ht = 0
     })
 
-    // Only render while the card is on screen
-    new IntersectionObserver(([entry]) => { st.on = entry.isIntersecting }, { rootMargin: '100px' }).observe(el)
+    // Only render while the card is on screen (it starts a little before it is visible)
+    new IntersectionObserver(([entry]) => { st.on = entry.isIntersecting }, { rootMargin: '250px' }).observe(el)
 
     const pattern = PATTERN[name]
     const tint = new THREE.Color()
@@ -160,7 +167,17 @@ export function initProducts(mobile) {
 
       renderer.render(scene, camera)
     })
-  })
+
+    await warm(renderer, scene, camera)
+  }
+
+  // Build the cards one at a time, so no single moment freezes the page
+  ;(async () => {
+    for (const el of document.querySelectorAll('.card-3d')) {
+      await setupCard(el)
+      await sleep(140)
+    }
+  })()
 
   // One animation loop for all four cards
   function loop(now) {

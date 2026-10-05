@@ -1,6 +1,5 @@
 import * as THREE from 'three'
 import gsap from 'gsap'
-import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { createContourMaterial, buildCapGeometry } from './keycap.js'
 
 // =====================================================================
@@ -8,18 +7,23 @@ import { createContourMaterial, buildCapGeometry } from './keycap.js'
 // =====================================================================
 const ENABLED = true // false = no hero background at all
 const TERRAIN = true // the slowly moving contour map
-const KEYCAPS = true // dark keycaps drifting in the empty corners
+const KEYCAPS = true // keycaps drifting in the empty corners
 
 // ---------- Look (tuning) ----------
 const LEVELS = 9 // number of contour lines (more = busier)
 const HILLS = 2.6 // how many hills fit on the screen (more = smaller hills)
 const LINE_ALPHA = 0.15 // how visible the lines are
 const SPEED = 0.03 // how fast the terrain breathes
-const CAP_COUNT = 6 // floating keycaps (desktop). Phones get 4.
-const CAP_LIGHT = true // true = dull, faded white keycaps. false = back to the dark ones (this one line is the undo).
-const CAP_COLOR = 0xe6e9ef // colour of the light keycaps
-const CAP_OPACITY = 0.9 // lower = more faded
-const CAP_TINT = 0.3 // how much of the mode colour the keycaps pick up. 0 = none (stay grey), 1 = fully the mode colour
+const CAP_COUNT = 9 // floating keycaps (desktop). Phones get 4.
+const CAP_LIGHT = true // true = faded light keycaps. false = the dark ones (this one line is the undo).
+const CAP_COLOR = 0xf4f6fa // colour of the light keycaps
+const CAP_OPACITY = 1 // lower = more faded
+const CAP_TINT = 0.3 // how much of the mode colour the keycaps pick up (0 = none)
+
+// ---------- Fade out when Modes ends ----------
+const FADE_AT = 0.9 // when the bottom of Modes passes this fraction of the screen height, the fade starts
+const FADE_OUT = 1.5 // seconds the whole background takes to fade out
+const FADE_IN = 0.9 // seconds it takes to come back when you scroll up
 
 const noop = { show() {}, setColor() {}, pulse() {} }
 
@@ -102,6 +106,7 @@ export function initHeroBg({ isMobile = false } = {}) {
   const anchor = document.querySelector('#webgl')
   if (!anchor) return noop
   const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  const modesEl = document.querySelector('#modes')
 
   // A separate canvas behind the hero text (the main canvas sits above it)
   const canvas = document.createElement('canvas')
@@ -153,7 +158,7 @@ export function initHeroBg({ isMobile = false } = {}) {
   scene.add(group)
   const caps = []
   let capMat = null
-  const rim = new THREE.DirectionalLight(0xffffff, 2.0) // an edge light in the mode colour
+  const rim = new THREE.DirectionalLight(0xffffff, 1.3) // an edge light in the mode colour
   if (KEYCAPS) {
     const ambient = new THREE.AmbientLight(0xffffff, 0.8)
     const key = new THREE.DirectionalLight(0xffffff, 1.5)
@@ -162,7 +167,7 @@ export function initHeroBg({ isMobile = false } = {}) {
     scene.add(ambient, key, rim)
 
     capMat = createContourMaterial({ px: 1.0, levels: 14, scale: 1 / 4.0 })
-    capMat.material.transparent = true // so the whole group can fade with the scroll
+    capMat.material.transparent = true // so the whole group can fade
     if (CAP_LIGHT) { capMat.material.color.set(CAP_COLOR); capMat.material.roughness = 1 }
 
     const rnd = seeded(11)
@@ -224,18 +229,9 @@ export function initHeroBg({ isMobile = false } = {}) {
   window.addEventListener('resize', resize)
   resize()
 
-  // ---------- Fade: in after the intro, out as the hero ends ----------
-     const S = { appear: 0, scroll: 1 } // scroll: 1 = background on, 0 = off. It is driven by a timed animation, not by the scroll distance.
-  const FADE_OUT = 1.6 // seconds the background takes to leave
-  const FADE_IN = 1.0 // seconds it takes to come back
-  const fadeTo = (v, d) => gsap.to(S, { scroll: v, duration: d, ease: 'power2.inOut', overwrite: 'auto' })
-  ScrollTrigger.create({
-    trigger: '#modes',
-    start: 'bottom 65%', // once the end of Modes passes this point (Anatomy is coming in), the fade starts
-    end: 'max', // active from there to the bottom of the page
-    onToggle: (self) => fadeTo(self.isActive ? 0 : 1, self.isActive ? FADE_OUT : FADE_IN),
-    onRefresh: (self) => { if (!gsap.isTweening(S)) S.scroll = self.isActive ? 0 : 1 }, // also correct after a reload in the middle of the page
-  })
+  // ---------- Fade state ----------
+  const S = { appear: 0 } // 0 -> 1 once, after the intro
+  let fade = 1 // 1 = background on, 0 = gone. A plain ramp over time, so its speed never depends on how fast you scroll.
 
   let mx = 0
   let my = 0
@@ -258,7 +254,12 @@ export function initHeroBg({ isMobile = false } = {}) {
     requestAnimationFrame(frame)
     const dt = Math.min((now - last) / 1000, 0.05)
     last = now
-    const total = S.appear * S.scroll
+
+    // Has the end of Modes started to leave the screen? Then fade out. Scroll back up: fade in.
+    const r = modesEl ? modesEl.getBoundingClientRect() : null
+    const gone = !!r && r.bottom < window.innerHeight * FADE_AT
+    fade = Math.max(0, Math.min(1, fade + (gone ? -dt / FADE_OUT : dt / FADE_IN)))
+    const total = S.appear * smooth(fade)
 
     if (total < 0.003) { // nothing to show: do no work at all
       if (!hidden) { canvas.style.visibility = 'hidden'; hidden = true }
@@ -285,12 +286,12 @@ export function initHeroBg({ isMobile = false } = {}) {
     if (KEYCAPS) {
       px += (mx - px) * 0.04
       py += (my - py) * 0.04
-      const leave = 1 - S.scroll // 0 while the background is fully on, 1 once it has gone
-      group.position.set(px * 0.6, -py * 0.35 + leave * 5, 0) // a little parallax, and the keycaps drift upward as they leave
-      group.scale.setScalar(1 - leave * 0.12)
+      group.position.set(px * 0.6, -py * 0.35, 0) // a little parallax
       rim.color.copy(cur)
       capMat.lineColor.set(CAP_LIGHT ? 0x2c313b : 0x6c7584).lerp(cur, CAP_LIGHT ? 0.25 : 0.5) // dark lines show on light keycaps
-      if (CAP_LIGHT) capMat.material.color.set(CAP_COLOR).lerp(cur, CAP_TINT) // the keycaps take a hint of the mode colour (cur glides, so the change is smooth)      group.visible = total > 0.01
+      capMat.material.opacity = total * (CAP_LIGHT ? CAP_OPACITY : 1)
+      if (CAP_LIGHT) capMat.material.color.set(CAP_COLOR).lerp(cur, CAP_TINT) // the keycaps take a hint of the mode colour
+      group.visible = total > 0.01
       caps.forEach((m) => {
         const u = m.userData
         if (!reduce) {
@@ -298,7 +299,7 @@ export function initHeroBg({ isMobile = false } = {}) {
           m.rotation.y += dt * u.ry
           m.rotation.z += dt * u.rz
         }
-        m.position.x = u.x0 * (1 + leave * 0.2) // they spread out a little as they leave
+        m.position.x = u.x0
         m.position.y = u.y0 + Math.sin(time * u.sp + u.ph) * u.amp
       })
     }

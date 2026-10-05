@@ -185,9 +185,9 @@ export function reveal(intro) {
 
       // Build the heavy scenes while the page is idle, one by one, instead of in the middle of a scroll
       const idle = (fn) => ('requestIdleCallback' in window ? requestIdleCallback(fn, { timeout: 4000 }) : setTimeout(fn, 600))
-      setTimeout(() => idle(() => products.ensure()), 1800)
-      setTimeout(() => idle(() => story.ensure()), 3800)
-      setTimeout(() => idle(() => cta.ensure()), 5800)
+      setTimeout(() => idle(() => products.ensure()), 3500)
+      setTimeout(() => idle(() => story.ensure()), 6500)
+      setTimeout(() => idle(() => cta.ensure()), 9000)
     }, 1.6)
 
     SplitText.create('.wordmark', {
