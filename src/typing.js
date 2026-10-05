@@ -1,6 +1,6 @@
 // Listens to the real keyboard. Each key press animates the matching 3D key,
 // plays a sound and shows the typed text on the page.
-export function initTyping (keyboard, audio, isActive) {
+export function initTyping(keyboard, audio, isActive) {
   const out = document.querySelector('#typed')
   const toggle = document.querySelector('#sound-toggle')
   const down = new Set() // keys currently held
@@ -11,11 +11,19 @@ export function initTyping (keyboard, audio, isActive) {
   window.addEventListener('keydown', (e) => {
     if (!isActive() || isField(e.target) || e.metaKey || e.ctrlKey || e.altKey) return
     audio.unlock()
-    if (e.code === 'Space' || e.code.startsWith('Arrow')) e.preventDefault() // stop Space and arrows from scrolling the page
-    if (e.repeat) return // ignore auto-repeat while a key is held
+    if (e.code === 'Space' || e.code === 'Backspace' || e.code.startsWith('Arrow')) e.preventDefault() // stop Space, arrows and Backspace from doing anything in the page
+
+    if (e.repeat) {
+      // holding a key: no new animation or sound, but the text keeps going (so holding Backspace keeps deleting)
+      if (e.key === 'Backspace') text = text.slice(0, -1)
+      else if (e.key.length === 1) text = (text + e.key).slice(-28)
+      out.textContent = text
+      return
+    }
+
     down.add(e.code)
     keyboard.press(e.code)
-    window.dispatchEvent(new Event('keybo:press'))
+    window.dispatchEvent(new Event('keybo:press')) // the hero background flashes a little
     audio.tick()
 
     if (e.key.length === 1) text = (text + e.key).slice(-28)
@@ -33,7 +41,7 @@ export function initTyping (keyboard, audio, isActive) {
     down.clear()
   })
 
-  // Sound on/off button
+  // Sound on/off button (off by default)
   let on = false
   toggle.addEventListener('click', () => {
     on = !on

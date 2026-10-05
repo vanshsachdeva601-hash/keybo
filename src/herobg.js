@@ -15,7 +15,11 @@ const LEVELS = 9 // number of contour lines (more = busier)
 const HILLS = 2.6 // how many hills fit on the screen (more = smaller hills)
 const LINE_ALPHA = 0.15 // how visible the lines are
 const SPEED = 0.03 // how fast the terrain breathes
-const CAP_COUNT = 9 // floating keycaps (desktop). Phones get 4.
+const CAP_COUNT = 6 // floating keycaps (desktop). Phones get 4.
+const CAP_LIGHT = true // true = dull, faded white keycaps. false = back to the dark ones (this one line is the undo).
+const CAP_COLOR = 0xe6e9ef // colour of the light keycaps
+const CAP_OPACITY = 0.9 // lower = more faded
+const CAP_TINT = 0.3 // how much of the mode colour the keycaps pick up. 0 = none (stay grey), 1 = fully the mode colour
 
 const noop = { show() {}, setColor() {}, pulse() {} }
 
@@ -149,7 +153,7 @@ export function initHeroBg({ isMobile = false } = {}) {
   scene.add(group)
   const caps = []
   let capMat = null
-  const rim = new THREE.DirectionalLight(0xffffff, 1.3) // an edge light in the mode colour
+  const rim = new THREE.DirectionalLight(0xffffff, 2.0) // an edge light in the mode colour
   if (KEYCAPS) {
     const ambient = new THREE.AmbientLight(0xffffff, 0.8)
     const key = new THREE.DirectionalLight(0xffffff, 1.5)
@@ -159,6 +163,7 @@ export function initHeroBg({ isMobile = false } = {}) {
 
     capMat = createContourMaterial({ px: 1.0, levels: 14, scale: 1 / 4.0 })
     capMat.material.transparent = true // so the whole group can fade with the scroll
+    if (CAP_LIGHT) { capMat.material.color.set(CAP_COLOR); capMat.material.roughness = 1 }
 
     const rnd = seeded(11)
     const count = isMobile ? 4 : CAP_COUNT
@@ -221,11 +226,13 @@ export function initHeroBg({ isMobile = false } = {}) {
 
   // ---------- Fade: in after the intro, out as the hero ends ----------
   const S = { appear: 0, scroll: 1 }
+  const fadeOut = (self) => { S.scroll = 1 - smooth(self.progress) }
   ScrollTrigger.create({
-    trigger: '#stage',
-    start: 'top top',
-    end: 'bottom bottom',
-    onUpdate: (self) => { S.scroll = 1 - smooth((self.progress - 0.8) / 0.18) },
+    trigger: '#modes',
+    start: 'bottom 88%', // the background stays all through the hero and the Modes section...
+    end: 'bottom 45%', // ...and is gone by the time Anatomy starts
+    onUpdate: fadeOut,
+    onRefresh: fadeOut, // also correct after a reload in the middle of the page
   })
 
   let mx = 0
@@ -278,9 +285,8 @@ export function initHeroBg({ isMobile = false } = {}) {
       py += (my - py) * 0.04
       group.position.set(px * 0.6, -py * 0.35, 0) // a little parallax
       rim.color.copy(cur)
-      capMat.lineColor.set(0x6c7584).lerp(cur, 0.5)
-      capMat.material.opacity = total
-      group.visible = total > 0.01
+      capMat.lineColor.set(CAP_LIGHT ? 0x2c313b : 0x6c7584).lerp(cur, CAP_LIGHT ? 0.25 : 0.5) // dark lines show on light keycaps
+      if (CAP_LIGHT) capMat.material.color.set(CAP_COLOR).lerp(cur, CAP_TINT) // the keycaps take a hint of the mode colour (cur glides, so the change is smooth)      group.visible = total > 0.01
       caps.forEach((m) => {
         const u = m.userData
         if (!reduce) {

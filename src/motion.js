@@ -8,23 +8,21 @@ export function initMotion() {
   // Respect people who turned off motion in their system settings
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
 
-  // ---------- 1) Headings: word by word ----------
-  // SplitText wraps each word in its own element, so we can animate words one by one.
-  // autoSplit re-splits automatically on resize and after fonts load.
-  document.querySelectorAll('.section .h2').forEach((el) => {
-    SplitText.create(el, {
-      type: 'words',
-      autoSplit: true,
-      onSplit(self) {
-        return gsap.from(self.words, {
-          y: 50,
-          autoAlpha: 0,
-          duration: 0.9,
-          ease: 'power4.out',
-          stagger: 0.07,
-          scrollTrigger: { trigger: el, start: 'top 85%', once: true },
-        })
-      },
+    // ---------- 1) Headings: word by word ----------
+  // Split once, after the fonts are ready. Words-only text needs no re-splitting on resize (the words wrap by themselves),
+  // and a re-split would hide an already revealed heading and play it a second time.
+  const fontsReady = document.fonts ? document.fonts.ready : Promise.resolve()
+  fontsReady.then(() => {
+    document.querySelectorAll('.section .h2').forEach((el) => {
+      const split = SplitText.create(el, { type: 'words' })
+      gsap.from(split.words, {
+        y: 50,
+        autoAlpha: 0,
+        duration: 0.9,
+        ease: 'power4.out',
+        stagger: 0.07,
+        scrollTrigger: { trigger: el, start: 'top 85%', once: true },
+      })
     })
   })
 

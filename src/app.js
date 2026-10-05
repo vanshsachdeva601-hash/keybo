@@ -75,7 +75,7 @@ function lazy(selector, margin, build) {
     io.disconnect()
     api = build()
     queue.forEach((fn) => fn(api))
-    ScrollTrigger.refresh()
+
   }
   return { run: (fn) => (api ? fn(api) : queue.push(fn)), ensure }
 }
